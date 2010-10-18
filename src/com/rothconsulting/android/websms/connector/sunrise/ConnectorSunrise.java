@@ -18,7 +18,6 @@
  */
 package com.rothconsulting.android.websms.connector.sunrise;
 
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 
@@ -54,7 +53,8 @@ public class ConnectorSunrise extends Connector {
 	private String SMS_CREDIT = "???";
 	/** HTTP Useragent. */
 	private static final String USER_AGENT = "Mozilla/5.0 (Windows; U; Windows NT 6.1; de; rv:1.9.2.8) Gecko/20100722 Firefox/3.6.8";
-
+	/** Default Character Encoding */
+	private static final String SMS_CHARACTER_ENCODING = "UTF-8";
 	/** Check whether this connector is bootstrapping. */
 	private static boolean inBootstrap = false;
 
@@ -150,27 +150,6 @@ public class ConnectorSunrise extends Connector {
 		// SMS Text
 		String text = command.getText();
 		Log.d(TAG, "text=" + text);
-		String textUTF8 = "";
-		String textISO_8859_15 = "";
-		String textISO_8859_15_UTF8 = "";
-		String textUTF8_ISO_8859_15 = "";
-
-		try {
-			textUTF8 = new String(text.getBytes("UTF-8"), "UTF-8");
-			textISO_8859_15 = new String(text.getBytes("ISO-8859-15"), "ISO-8859-15");
-			textISO_8859_15_UTF8 = new String(text.getBytes("ISO-8859-15"), "UTF-8");
-			textUTF8_ISO_8859_15 = new String(text.getBytes("UTF-8"), "ISO-8859-15");
-
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		Log.d(TAG, "text UTF-8=" + textUTF8);
-		Log.d(TAG, "text ISO-8859-15=" + textISO_8859_15);
-		Log.d(TAG, "text ISO_8859_15_UTF8=" + textISO_8859_15_UTF8);
-		Log.d(TAG, "text UTF8_ISO_8859_15=" + textUTF8_ISO_8859_15);
-
 		// SMS Receiver
 		String[] to = command.getRecipients();
 		for (int i = 0; i < to.length; i++) {
@@ -224,7 +203,7 @@ public class ConnectorSunrise extends Connector {
 			// send data
 			Log.d(TAG, "send data: getHttpClient(...)");
 			HttpResponse response = Utils.getHttpClient(fullTargetURL, null, postParameter,
-					USER_AGENT, fullTargetURL, "UTF-8", true);
+					USER_AGENT, fullTargetURL, SMS_CHARACTER_ENCODING, true);
 			Log.d(TAG, "response=" + response);
 			int resp = response.getStatusLine().getStatusCode();
 			Log.d(TAG, "int resp=" + resp);
