@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+	<!--
+		Copyright (C) 2010 Felix Bechstein
+	-->
+	<!--
+		This file is part of WebSMS. This program is free software; you can
+		redistribute it and/or modify it under the terms of the GNU General
+		Public License as published by the Free Software Foundation; either
+		version 3 of the License, or (at your option) any later version.
+	-->
+	<!--
+		This program is distributed in the hope that it will be useful, but
+		WITHOUT ANY WARRANTY; without even the implied warranty of
+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+		General Public License for more details. You should have received a
+		copy of the GNU General Public License along with this program; If
+		not, see <http://www.gnu.org/licenses/>.
+	-->
+<resources>
+	<string name="app_name">WebSMS Connector: Sunrise</string>
+	<string name="app_version">0.2</string>
+	<string name="connector_sunrise_author">Koni</string>
+	<string name="connector_sunrise_name">Sunrise</string>
+	<string name="connector_sunrise_preferences">Preferences - Sunrise</string>
+	<string name="connector_sunrise_enable_">Enable Sunrise</string>
+	<string name="connector_sunrise_user_">Mail address</string>
+	<string name="connector_sunrise_user_hint">user@sunrise.ch</string>
+	<string name="connector_sunrise_password_">E-Mail Password</string>
+	<string name="connector_sunrise_password_hint">Password of your Sunrise E-Mail Account</string>
+	<string name="connector_sunrise_register_account">Sunrise Homepage (Mail/SMS)</string>
+	<string name="connector_sunrise_register_account_hint">No account? Register here...</string>
+	<string name="connector_sunrise_register_account_url">https://mip.sunrise.ch/mip/dyn/registration/regLogin</string>
+</resources>
