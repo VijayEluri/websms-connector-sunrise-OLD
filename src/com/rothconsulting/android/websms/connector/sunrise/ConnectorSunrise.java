@@ -102,6 +102,7 @@ public class ConnectorSunrise extends Connector {
 	protected final void doBootstrap(final Context context, final Intent intent)
 			throws WebSMSException {
 		Log.d(TAG, "Start doBootstrap");
+
 		if (inBootstrap) {
 			Log.d(TAG, "already in bootstrap: skip bootstrap");
 			return;
@@ -173,6 +174,7 @@ public class ConnectorSunrise extends Connector {
 		postParameter.add(new BasicNameValuePair("message", text));
 		postParameter.add(new BasicNameValuePair("send", "send"));
 		postParameter.add(new BasicNameValuePair("task", "send"));
+
 		// postParameter.add(new BasicNameValuePair("mmsAttachment", ""));
 		// postParameter.add(new BasicNameValuePair("mmsAttachmentFileName",
 		// ""));
