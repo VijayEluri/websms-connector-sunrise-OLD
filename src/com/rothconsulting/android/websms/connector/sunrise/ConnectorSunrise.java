@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Koni Roth
+ * Copyright (C) 2010 Koni
  * 
  * This file is only usefull as part of WebSMS.
  * 
@@ -24,17 +24,11 @@ import java.util.ArrayList;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicNameValuePair;
 
+import android.R;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import de.ub0r.android.websms.connector.common.Connector;
-import de.ub0r.android.websms.connector.common.ConnectorCommand;
-import de.ub0r.android.websms.connector.common.ConnectorSpec;
-import de.ub0r.android.websms.connector.common.ConnectorSpec.SubConnectorSpec;
-import de.ub0r.android.websms.connector.common.Log;
-import de.ub0r.android.websms.connector.common.Utils;
-import de.ub0r.android.websms.connector.common.WebSMSException;
 
 /**
  * AsyncTask to manage IO to Sunrise API.
@@ -67,9 +61,12 @@ public class ConnectorSunrise extends Connector {
 		ConnectorSpec c = new ConnectorSpec(name);
 		c.setAuthor(context.getString(R.string.connector_sunrise_author));
 		c.setBalance(null);
-		c.setCapabilities(ConnectorSpec.CAPABILITIES_BOOTSTRAP | ConnectorSpec.CAPABILITIES_UPDATE
-				| ConnectorSpec.CAPABILITIES_SEND | ConnectorSpec.CAPABILITIES_PREFS);
-		c.addSubConnector("sunrise", c.getName(), SubConnectorSpec.FEATURE_MULTIRECIPIENTS);
+		c.setCapabilities(ConnectorSpec.CAPABILITIES_BOOTSTRAP
+				| ConnectorSpec.CAPABILITIES_UPDATE
+				| ConnectorSpec.CAPABILITIES_SEND
+				| ConnectorSpec.CAPABILITIES_PREFS);
+		c.addSubConnector("sunrise", c.getName(),
+				SubConnectorSpec.FEATURE_MULTIRECIPIENTS);
 		return c;
 	}
 
@@ -77,9 +74,11 @@ public class ConnectorSunrise extends Connector {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public final ConnectorSpec updateSpec(final Context context, final ConnectorSpec connectorSpec) {
+	public final ConnectorSpec updateSpec(final Context context,
+			final ConnectorSpec connectorSpec) {
 		Log.d(TAG, "Start updateSpec");
-		final SharedPreferences p = PreferenceManager.getDefaultSharedPreferences(context);
+		final SharedPreferences p = PreferenceManager
+				.getDefaultSharedPreferences(context);
 		if (p.getBoolean(Preferences.PREFS_ENABLED, false)) {
 			if (p.getString(Preferences.PREFS_USER, "").length() > 0
 					&& p.getString(Preferences.PREFS_PASSWORD, "") // .
@@ -108,11 +107,12 @@ public class ConnectorSunrise extends Connector {
 			return;
 		}
 		inBootstrap = true;
-		final SharedPreferences p = PreferenceManager.getDefaultSharedPreferences(context);
+		final SharedPreferences p = PreferenceManager
+				.getDefaultSharedPreferences(context);
 
 		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
-		postParameter.add(new BasicNameValuePair("username", p
-				.getString(Preferences.PREFS_USER, "")));
+		postParameter.add(new BasicNameValuePair("username", p.getString(
+				Preferences.PREFS_USER, "")));
 		postParameter.add(new BasicNameValuePair("password", p.getString(
 				Preferences.PREFS_PASSWORD, "")));
 		postParameter.add(new BasicNameValuePair("_remember", "on"));
@@ -142,7 +142,8 @@ public class ConnectorSunrise extends Connector {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected final void doSend(final Context context, final Intent intent) throws WebSMSException {
+	protected final void doSend(final Context context, final Intent intent)
+			throws WebSMSException {
 		Log.d(TAG, "Start doSend");
 		this.doBootstrap(context, intent);
 
@@ -158,7 +159,8 @@ public class ConnectorSunrise extends Connector {
 				if (i > 0) {
 					recipients.append(",");
 				}
-				recipients.append(Utils.national2international(command.getDefPrefix(),
+				recipients.append(Utils.national2international(
+						command.getDefPrefix(),
 						Utils.getRecipientsNumber(to[i])));
 			}
 		}
@@ -168,8 +170,10 @@ public class ConnectorSunrise extends Connector {
 		Log.d(TAG, "all recipients=" + recipients);
 		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
 
-		postParameter.add(new BasicNameValuePair("recipient", recipients.toString()));
-		postParameter.add(new BasicNameValuePair("charsLeft", "" + (160 - text.length())));
+		postParameter.add(new BasicNameValuePair("recipient", recipients
+				.toString()));
+		postParameter.add(new BasicNameValuePair("charsLeft", ""
+				+ (160 - text.length())));
 		postParameter.add(new BasicNameValuePair("type", "sms"));
 		postParameter.add(new BasicNameValuePair("message", text));
 		postParameter.add(new BasicNameValuePair("send", "send"));
@@ -195,7 +199,8 @@ public class ConnectorSunrise extends Connector {
 	 *             WebSMSException
 	 */
 	private void sendData(final String fullTargetURL, final Context context,
-			final ArrayList<BasicNameValuePair> postParameter) throws WebSMSException {
+			final ArrayList<BasicNameValuePair> postParameter)
+			throws WebSMSException {
 		Log.d(TAG, "Start sendData");
 		try { // get Connection
 
@@ -204,15 +209,18 @@ public class ConnectorSunrise extends Connector {
 			Log.d(TAG, "--HTTP POST--");
 			// send data
 			Log.d(TAG, "send data: getHttpClient(...)");
-			HttpResponse response = Utils.getHttpClient(fullTargetURL, null, postParameter,
-					USER_AGENT, fullTargetURL, SMS_CHARACTER_ENCODING, true);
+			HttpResponse response = Utils.getHttpClient(fullTargetURL, null,
+					postParameter, USER_AGENT, fullTargetURL,
+					SMS_CHARACTER_ENCODING, true);
 			Log.d(TAG, "response=" + response);
 			int resp = response.getStatusLine().getStatusCode();
 			Log.d(TAG, "int resp=" + resp);
 			if (resp != HttpURLConnection.HTTP_OK) {
-				throw new WebSMSException(context, R.string.error_http, "" + resp);
+				throw new WebSMSException(context, R.string.error_http, ""
+						+ resp);
 			}
-			String htmlText = Utils.stream2str(response.getEntity().getContent()).trim();
+			String htmlText = Utils.stream2str(
+					response.getEntity().getContent()).trim();
 			if (htmlText == null || htmlText.length() == 0) {
 				throw new WebSMSException(context, R.string.error_service);
 			}
@@ -228,7 +236,8 @@ public class ConnectorSunrise extends Connector {
 				this.SMS_CREDIT = htmlText.substring(indexStartSMSCredit + 7,
 						indexStartSMSCredit + 9);
 			}
-			Log.d(TAG, "indexOf SMS gratis=" + indexStartSMSCredit + " -- " + this.SMS_CREDIT);
+			Log.d(TAG, "indexOf SMS gratis=" + indexStartSMSCredit + " -- "
+					+ this.SMS_CREDIT);
 
 			this.getSpec(context).setBalance("SMS=" + this.SMS_CREDIT);
 
