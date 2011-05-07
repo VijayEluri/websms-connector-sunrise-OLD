@@ -22,5 +22,6 @@
 	<string name="connector_sunrise_user_">Sunrise Mailadresse</string>
 	<string name="connector_sunrise_password_hint">Sunrise Mail Passwort</string>
 	<string name="connector_sunrise_register_account_hint">Kein Konto? Registriere Dich hier...</string>
-
+	<string name="connector_sunrise_gratis">Gratis</string>
+	<string name="connector_sunrise_bezahlt">Bezahlt</string>
 </resources>

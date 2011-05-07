@@ -30,4 +30,6 @@
 	<string name="connector_sunrise_register_account">Sunrise Homepage (Mail/SMS)</string>
 	<string name="connector_sunrise_register_account_hint">No account? Register here...</string>
 	<string name="connector_sunrise_register_account_url">https://mip.sunrise.ch/mip/dyn/registration/regLogin</string>
+	<string name="connector_sunrise_gratis">Free</string>
+	<string name="connector_sunrise_bezahlt">Payed</string>
 </resources>

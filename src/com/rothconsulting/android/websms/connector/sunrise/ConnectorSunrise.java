@@ -137,7 +137,7 @@ public class ConnectorSunrise extends Connector {
 		this.doBootstrap(context, intent);
 
 		this.sendData(URL_SENDSMS, context, null);
-		this.getSpec(context).setBalance("SMS=" + this.SMS_CREDIT);
+		this.getSpec(context).setBalance(this.SMS_CREDIT);
 
 		Log.d(TAG, "End doUpdate");
 	}
@@ -242,18 +242,25 @@ public class ConnectorSunrise extends Connector {
 			// Log.d(TAG, htmlText);
 			// Log.d(TAG, "--End HTTP RESPONSE--");
 
-			int indexStartSMSCredit = htmlText.indexOf("Gratis ");
-			if (indexStartSMSCredit == -1) {
-				indexStartSMSCredit = htmlText.indexOf("Gratuits ");
-			}
-			if (indexStartSMSCredit > 0) {
-				this.SMS_CREDIT = htmlText.substring(indexStartSMSCredit + 7,
-						indexStartSMSCredit + 9);
-			}
-			Log.d(TAG, "indexOf Gratis=" + indexStartSMSCredit + " -- Gratis="
-					+ this.SMS_CREDIT);
+			String guthabenGratis = this.getGuthabenGratis(htmlText, context);
+			String guthabenBezahlt = this.getGuthabenBezahlt(htmlText, context);
 
-			this.getSpec(context).setBalance("SMS=" + this.SMS_CREDIT);
+			if (guthabenGratis != null && !guthabenGratis.equals("")) {
+				guthabenGratis = context
+						.getString(R.string.connector_sunrise_gratis)
+						+ "="
+						+ guthabenGratis;
+				this.SMS_CREDIT = guthabenGratis;
+			}
+			if (guthabenBezahlt != null && !guthabenBezahlt.equals("")
+					&& !guthabenBezahlt.trim().equals("0")) {
+				guthabenBezahlt = ", "
+						+ context.getString(R.string.connector_sunrise_bezahlt)
+						+ "=" + guthabenBezahlt;
+				this.SMS_CREDIT = guthabenGratis + guthabenBezahlt;
+			}
+
+			this.getSpec(context).setBalance(this.SMS_CREDIT);
 
 			htmlText = null;
 
@@ -261,6 +268,34 @@ public class ConnectorSunrise extends Connector {
 			Log.e(TAG, null, e);
 			throw new WebSMSException(e.getMessage());
 		}
+	}
+
+	private String getGuthabenGratis(final String htmlText,
+			final Context context) {
+		String guthabenGratis = "";
+		int indexStartSMSCredit = htmlText.indexOf("Gratis ");
+		if (indexStartSMSCredit > 0) {
+			guthabenGratis = htmlText.substring(indexStartSMSCredit + 7,
+					indexStartSMSCredit + 9);
+		}
+		Log.d(TAG, "indexOf Gratis=" + indexStartSMSCredit + " -- Gratis="
+				+ guthabenGratis);
+
+		return guthabenGratis;
+	}
+
+	private String getGuthabenBezahlt(final String htmlText,
+			final Context context) {
+		String guthabenBezahlt = "";
+		int indexStartSMSCredit = htmlText.indexOf("Bezahlt ");
+		if (indexStartSMSCredit > 0) {
+			guthabenBezahlt = htmlText.substring(indexStartSMSCredit + 8,
+					indexStartSMSCredit + 10);
+		}
+		Log.d(TAG, "indexOf Bezahlt =" + indexStartSMSCredit + " -- Bezahlt="
+				+ guthabenBezahlt);
+
+		return guthabenBezahlt;
 	}
 
 }
