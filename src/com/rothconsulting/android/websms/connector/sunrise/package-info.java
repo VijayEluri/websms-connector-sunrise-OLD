@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Felix Bechstein / Koni Roth
+ * Copyright (C) 2010 Felix Bechstein / Koni
  * 
  * This file is part of WebSMS.
  * 
@@ -21,7 +21,7 @@
  * WebSMS Connector: Sunrise. Sunrise connector deployed as separate apk.
  * 
  * @version 0.1
- * @author konir
+ * @author koni
  */
 package com.rothconsulting.android.websms.connector.sunrise;
 

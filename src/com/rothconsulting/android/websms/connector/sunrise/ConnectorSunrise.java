@@ -24,11 +24,17 @@ import java.util.ArrayList;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicNameValuePair;
 
-import android.R;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import de.ub0r.android.websms.connector.common.Connector;
+import de.ub0r.android.websms.connector.common.ConnectorCommand;
+import de.ub0r.android.websms.connector.common.ConnectorSpec;
+import de.ub0r.android.websms.connector.common.ConnectorSpec.SubConnectorSpec;
+import de.ub0r.android.websms.connector.common.Log;
+import de.ub0r.android.websms.connector.common.Utils;
+import de.ub0r.android.websms.connector.common.WebSMSException;
 
 /**
  * AsyncTask to manage IO to Sunrise API.
@@ -45,10 +51,11 @@ public class ConnectorSunrise extends Connector {
 	private static final String URL_SENDSMS = "https://mip.sunrise.ch/mip/dyn/sms/sms?up_contactsPerPage=14&lang=de&country=us&.lang=de&.country=us&synd=ig&mid=36&ifpctok=8799310261136394284&exp_track_js=1&parent=http://partnerpage.google.com&libs=7ndonz73vUA/lib/liberror_tracker.js,vrFMICQBNJo/lib/libcore.js,OqjxSeEKc8o/lib/libdynamic-height.js&view=home";
 	/** SMS Credit */
 	private String SMS_CREDIT = "???";
-	/** HTTP Useragent. */
-	private static final String USER_AGENT = "Mozilla/5.0 (Windows; U; Windows NT 6.1; de; rv:1.9.2.8) Gecko/20100722 Firefox/3.6.8";
-	/** Default Character Encoding */
-	private static final String SMS_CHARACTER_ENCODING = "UTF-8";
+	/** HTTP User agent. */
+	private static final String USER_AGENT = "Mozilla/5.0 (Windows; U; Windows NT 6.1; de; rv:1.9.2.15) Gecko/20110303 Firefox/3.6.15";
+	/** SMS Encoding */
+	private static final String ENCODING = "UTF-8";
+
 	/** Check whether this connector is bootstrapping. */
 	private static boolean inBootstrap = false;
 
@@ -101,8 +108,7 @@ public class ConnectorSunrise extends Connector {
 	protected final void doBootstrap(final Context context, final Intent intent)
 			throws WebSMSException {
 		Log.d(TAG, "Start doBootstrap");
-
-		if (inBootstrap) {
+		if (inBootstrap && !this.SMS_CREDIT.equals("???")) {
 			Log.d(TAG, "already in bootstrap: skip bootstrap");
 			return;
 		}
@@ -130,9 +136,7 @@ public class ConnectorSunrise extends Connector {
 		Log.d(TAG, "Start doUpdate");
 		this.doBootstrap(context, intent);
 
-		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
-
-		this.sendData(URL_SENDSMS, context, postParameter);
+		this.sendData(URL_SENDSMS, context, null);
 		this.getSpec(context).setBalance("SMS=" + this.SMS_CREDIT);
 
 		Log.d(TAG, "End doUpdate");
@@ -151,8 +155,28 @@ public class ConnectorSunrise extends Connector {
 		StringBuilder recipients = new StringBuilder();
 		// SMS Text
 		String text = command.getText();
+		Log.d(TAG, "text.length()=" + text.length());
 		Log.d(TAG, "text=" + text);
-		// SMS Receiver
+		String charsLeft = "";
+		if (text != null) {
+			if (text.length() <= 160) {
+				charsLeft = "" + (160 - text.length()) + " / 1";
+			}
+			if (text.length() > 160 && text.length() <= 320) {
+				charsLeft = "" + (320 - text.length()) + " / 2";
+			}
+			if (text.length() > 320 && text.length() <= 480) {
+				charsLeft = "" + (480 - text.length()) + " / 3";
+			}
+			if (text.length() > 480) {
+				text = text.substring(0, 480);
+				Log.d(TAG, "text gekürzt. length=" + text.length());
+				charsLeft = "" + (480 - text.length()) + " / 3";
+			}
+		}
+		Log.d(TAG, "charsLeft=" + charsLeft);
+
+		// SMS Recipients
 		String[] to = command.getRecipients();
 		for (int i = 0; i < to.length; i++) {
 			if (to[i] != null && to[i].length() > 1) {
@@ -172,16 +196,11 @@ public class ConnectorSunrise extends Connector {
 
 		postParameter.add(new BasicNameValuePair("recipient", recipients
 				.toString()));
-		postParameter.add(new BasicNameValuePair("charsLeft", ""
-				+ (160 - text.length())));
+		postParameter.add(new BasicNameValuePair("charsLeft", charsLeft));
 		postParameter.add(new BasicNameValuePair("type", "sms"));
 		postParameter.add(new BasicNameValuePair("message", text));
 		postParameter.add(new BasicNameValuePair("send", "send"));
 		postParameter.add(new BasicNameValuePair("task", "send"));
-
-		// postParameter.add(new BasicNameValuePair("mmsAttachment", ""));
-		// postParameter.add(new BasicNameValuePair("mmsAttachmentFileName",
-		// ""));
 
 		// push data
 		this.sendData(URL_SENDSMS, context, postParameter);
@@ -189,44 +208,39 @@ public class ConnectorSunrise extends Connector {
 	}
 
 	/**
-	 * Send data.
+	 * Sending the SMS
 	 * 
+	 * @param fullTargetURL
 	 * @param context
-	 *            {@link Context}
-	 * @param packetData
-	 *            packetData
+	 * @param postParameter
 	 * @throws WebSMSException
-	 *             WebSMSException
 	 */
 	private void sendData(final String fullTargetURL, final Context context,
 			final ArrayList<BasicNameValuePair> postParameter)
 			throws WebSMSException {
 		Log.d(TAG, "Start sendData");
-		try { // get Connection
+		try {
 
-			Log.d(TAG, "--HTTP POST--");
 			Log.d(TAG, "URL: " + fullTargetURL);
-			Log.d(TAG, "--HTTP POST--");
 			// send data
 			Log.d(TAG, "send data: getHttpClient(...)");
 			HttpResponse response = Utils.getHttpClient(fullTargetURL, null,
-					postParameter, USER_AGENT, fullTargetURL,
-					SMS_CHARACTER_ENCODING, true);
-			Log.d(TAG, "response=" + response);
-			int resp = response.getStatusLine().getStatusCode();
-			Log.d(TAG, "int resp=" + resp);
-			if (resp != HttpURLConnection.HTTP_OK) {
+					postParameter, USER_AGENT, fullTargetURL, ENCODING, true);
+			int respStatus = response.getStatusLine().getStatusCode();
+			Log.d(TAG, "response status=" + respStatus);
+			Log.d(TAG, "response=\n" + response);
+			if (respStatus != HttpURLConnection.HTTP_OK) {
 				throw new WebSMSException(context, R.string.error_http, ""
-						+ resp);
+						+ respStatus);
 			}
 			String htmlText = Utils.stream2str(
 					response.getEntity().getContent()).trim();
 			if (htmlText == null || htmlText.length() == 0) {
 				throw new WebSMSException(context, R.string.error_service);
 			}
-			Log.d(TAG, "--Start HTTP RESPONSE--");
-			Log.d(TAG, htmlText);
-			Log.d(TAG, "--End HTTP RESPONSE--");
+			// Log.d(TAG, "--Start HTTP RESPONSE--");
+			// Log.d(TAG, htmlText);
+			// Log.d(TAG, "--End HTTP RESPONSE--");
 
 			int indexStartSMSCredit = htmlText.indexOf("Gratis ");
 			if (indexStartSMSCredit == -1) {
@@ -236,7 +250,7 @@ public class ConnectorSunrise extends Connector {
 				this.SMS_CREDIT = htmlText.substring(indexStartSMSCredit + 7,
 						indexStartSMSCredit + 9);
 			}
-			Log.d(TAG, "indexOf SMS gratis=" + indexStartSMSCredit + " -- "
+			Log.d(TAG, "indexOf Gratis=" + indexStartSMSCredit + " -- Gratis="
 					+ this.SMS_CREDIT);
 
 			this.getSpec(context).setBalance("SMS=" + this.SMS_CREDIT);
