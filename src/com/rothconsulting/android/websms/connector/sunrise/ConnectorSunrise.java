@@ -48,11 +48,13 @@ public class ConnectorSunrise extends Connector {
 	/** Login URL. */
 	private static final String URL_LOGIN = "https://mip.sunrise.ch/mip/dyn/login/login";
 	/** SMS URL. */
-	private static final String URL_SENDSMS = "https://mip.sunrise.ch/mip/dyn/sms/sms?up_contactsPerPage=14&lang=de&country=us&.lang=de&.country=us&synd=ig&mid=36&ifpctok=8799310261136394284&exp_track_js=1&parent=http://partnerpage.google.com&libs=7ndonz73vUA/lib/liberror_tracker.js,vrFMICQBNJo/lib/libcore.js,OqjxSeEKc8o/lib/libdynamic-height.js&view=home";
+	// private static final String URL_SENDSMS =
+	// "https://mip.sunrise.ch/mip/dyn/sms/sms?up_contactsPerPage=14&lang=de&country=us&.lang=de&.country=us&synd=ig&mid=36&ifpctok=8799310261136394284&exp_track_js=1&parent=http://partnerpage.google.com&libs=7ndonz73vUA/lib/liberror_tracker.js,vrFMICQBNJo/lib/libcore.js,OqjxSeEKc8o/lib/libdynamic-height.js&view=home";
+	private static final String URL_SENDSMS = "https://mip.sunrise.ch/mip/dyn/sms/sms?up_contactsPerPage=14&amp;lang=de&amp;country=us&amp;.lang=de&amp;.country=us&amp;synd=ig&amp;mid=36&amp;ifpctok=4219904978209905668&amp;exp_track_js=1&amp;exp_ids=17259&amp;parent=http://partnerpage.google.com&amp;libs=7ndonz73vUA/lib/liberror_tracker.js,RNMmLHDUuvI/lib/libcore.js,OqjxSeEKc8o/lib/libdynamic-height.js&amp;view=home";
 	/** SMS Credit */
 	private String SMS_CREDIT = "???";
 	/** HTTP User agent. */
-	private static final String USER_AGENT = "Mozilla/5.0 (Windows; U; Windows NT 6.1; de; rv:1.9.2.15) Gecko/20110303 Firefox/3.6.15";
+	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:2.0.1) Gecko/20100101 Firefox/4.0.1";
 	/** SMS Encoding */
 	private static final String ENCODING = "UTF-8";
 
@@ -201,6 +203,14 @@ public class ConnectorSunrise extends Connector {
 		postParameter.add(new BasicNameValuePair("message", text));
 		postParameter.add(new BasicNameValuePair("send", "send"));
 		postParameter.add(new BasicNameValuePair("task", "send"));
+		postParameter.add(new BasicNameValuePair("currentMsisdn", command
+				.getDefSender()));
+
+		Log.d(TAG,
+				"************ command.getDefSender()=" + command.getDefSender());
+		Log.d(TAG,
+				"************ command.getCustomSender()="
+						+ command.getCustomSender());
 
 		// push data
 		this.sendData(URL_SENDSMS, context, postParameter);
