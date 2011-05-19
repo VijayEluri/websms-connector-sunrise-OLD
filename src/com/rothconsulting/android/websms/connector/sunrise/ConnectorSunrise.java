@@ -24,10 +24,14 @@ import java.util.ArrayList;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicNameValuePair;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.telephony.TelephonyManager;
 import de.ub0r.android.websms.connector.common.Connector;
 import de.ub0r.android.websms.connector.common.ConnectorCommand;
 import de.ub0r.android.websms.connector.common.ConnectorSpec;
@@ -48,8 +52,6 @@ public class ConnectorSunrise extends Connector {
 	/** Login URL. */
 	private static final String URL_LOGIN = "https://mip.sunrise.ch/mip/dyn/login/login";
 	/** SMS URL. */
-	// private static final String URL_SENDSMS =
-	// "https://mip.sunrise.ch/mip/dyn/sms/sms?up_contactsPerPage=14&lang=de&country=us&.lang=de&.country=us&synd=ig&mid=36&ifpctok=8799310261136394284&exp_track_js=1&parent=http://partnerpage.google.com&libs=7ndonz73vUA/lib/liberror_tracker.js,vrFMICQBNJo/lib/libcore.js,OqjxSeEKc8o/lib/libdynamic-height.js&view=home";
 	private static final String URL_SENDSMS = "https://mip.sunrise.ch/mip/dyn/sms/sms?up_contactsPerPage=14&amp;lang=de&amp;country=us&amp;.lang=de&amp;.country=us&amp;synd=ig&amp;mid=36&amp;ifpctok=4219904978209905668&amp;exp_track_js=1&amp;exp_ids=17259&amp;parent=http://partnerpage.google.com&amp;libs=7ndonz73vUA/lib/liberror_tracker.js,RNMmLHDUuvI/lib/libcore.js,OqjxSeEKc8o/lib/libdynamic-height.js&amp;view=home";
 	/** SMS Credit */
 	private String SMS_CREDIT = "???";
@@ -194,8 +196,8 @@ public class ConnectorSunrise extends Connector {
 		Log.d(TAG, "to.length=" + to.length);
 		Log.d(TAG, "to[0]=" + to[0]);
 		Log.d(TAG, "all recipients=" + recipients);
-		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
 
+		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
 		postParameter.add(new BasicNameValuePair("recipient", recipients
 				.toString()));
 		postParameter.add(new BasicNameValuePair("charsLeft", charsLeft));
@@ -203,14 +205,8 @@ public class ConnectorSunrise extends Connector {
 		postParameter.add(new BasicNameValuePair("message", text));
 		postParameter.add(new BasicNameValuePair("send", "send"));
 		postParameter.add(new BasicNameValuePair("task", "send"));
-		postParameter.add(new BasicNameValuePair("currentMsisdn", command
-				.getDefSender()));
-
-		Log.d(TAG,
-				"************ command.getDefSender()=" + command.getDefSender());
-		Log.d(TAG,
-				"************ command.getCustomSender()="
-						+ command.getCustomSender());
+		postParameter.add(new BasicNameValuePair("currentMsisdn", this
+				.getPhoneNumber(context, command)));
 
 		// push data
 		this.sendData(URL_SENDSMS, context, postParameter);
@@ -308,4 +304,76 @@ public class ConnectorSunrise extends Connector {
 		return guthabenBezahlt;
 	}
 
+	private String getPhoneNumber(final Context context,
+			final ConnectorCommand command) {
+
+		boolean isWrongNumber = false;
+		Log.d(TAG, "** command.getDefSender()=" + command.getDefSender());
+		Log.d(TAG, "** command.getCustomSender()=" + command.getCustomSender());
+
+		String phoneNumber = this.formatToSwissPhoneNumber(command
+				.getDefSender());
+
+		if (phoneNumber != null && !phoneNumber.equals("")
+				&& !phoneNumber.startsWith("07")) {
+			isWrongNumber = true;
+		}
+
+		if (phoneNumber == null || !phoneNumber.startsWith("07")) {
+			TelephonyManager tm = (TelephonyManager) context
+					.getSystemService(Context.TELEPHONY_SERVICE);
+			// android.permission.READ_PHONE_STATE
+			phoneNumber = tm.getLine1Number();
+			Log.d(TAG, "** tm.getLine1Number()=" + phoneNumber);
+		}
+
+		if (phoneNumber == null || isWrongNumber
+				|| !phoneNumber.startsWith("07")) {
+			Log.d(TAG, "** konnte keine gültige Telefonnummer finden");
+			this.showWrongNumberStatusBarNotification(context);
+		}
+		return phoneNumber;
+	}
+
+	private String formatToSwissPhoneNumber(String phoneNumber) {
+		Log.d(TAG, "** formatToSwissPhoneNumber vorher=" + phoneNumber);
+
+		if (phoneNumber != null) {
+			if (phoneNumber.startsWith("+417")) {
+				phoneNumber = phoneNumber.replace("+417", "07");
+			}
+			if (phoneNumber.startsWith("+4107")) {
+				phoneNumber = phoneNumber.replace("+4107", "07");
+			}
+		}
+		Log.d(TAG, "** formatToSwissPhoneNumber nachher=" + phoneNumber);
+		return phoneNumber;
+	}
+
+	private void showWrongNumberStatusBarNotification(final Context context) {
+
+		String ns = Context.NOTIFICATION_SERVICE;
+		NotificationManager mNotificationManager = (NotificationManager) context
+				.getSystemService(ns);
+
+		long when = System.currentTimeMillis();
+
+		PendingIntent contentIntent = PendingIntent.getActivity(context, 0,
+				null, 0);
+
+		Notification notification = new Notification(
+				R.drawable.stat_notify_sms_pending,
+				context.getString(R.string.connector_sunrise_wrong_mobilenumber),
+				when);
+
+		notification
+				.setLatestEventInfo(
+						context,
+						context.getString(R.string.connector_sunrise_wrong_mobilenumber),
+						context.getString(R.string.connector_sunrise_wrong_mobilenumber_text),
+						contentIntent);
+
+		mNotificationManager.notify(1, notification);
+
+	}
 }

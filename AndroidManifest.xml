@@ -17,7 +17,7 @@
 		not, see <http://www.gnu.org/licenses/>.
 	-->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.rothconsulting.android.websms.connector.sunrise" android:versionName="0.7" android:versionCode="7">
+	package="com.rothconsulting.android.websms.connector.sunrise" android:versionName="0.8" android:versionCode="8">
 	<application android:label="@string/app_name" android:icon="@drawable/icon" android:debuggable="false">
 
 		<!--
@@ -65,4 +65,6 @@
 	<uses-permission android:name="android.permission.INTERNET" />
 	<!-- WAKE_LOCK needed to make sure, sms are send even if user sends device to sleep. -->
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
+	<!-- READ_PHONE_STATE needed to get the phone number in order to send a Sunrise SMS. Sunrise requires the phone number -->
+	<uses-permission android:name="android.permission.READ_PHONE_STATE" />
 </manifest> 
