@@ -319,12 +319,15 @@ public class ConnectorSunrise extends Connector {
 			isWrongNumber = true;
 		}
 
-		if (phoneNumber == null || !phoneNumber.startsWith("07")) {
+		if (phoneNumber == null || phoneNumber.trim().equals("")
+				|| !phoneNumber.startsWith("07")) {
 			TelephonyManager tm = (TelephonyManager) context
 					.getSystemService(Context.TELEPHONY_SERVICE);
 			// android.permission.READ_PHONE_STATE
 			phoneNumber = tm.getLine1Number();
 			Log.d(TAG, "** tm.getLine1Number()=" + phoneNumber);
+			phoneNumber = this.formatToSwissPhoneNumber(phoneNumber);
+			Log.d(TAG, "** formattet phone number=" + phoneNumber);
 		}
 
 		if (phoneNumber == null || isWrongNumber
@@ -339,6 +342,7 @@ public class ConnectorSunrise extends Connector {
 		Log.d(TAG, "** formatToSwissPhoneNumber vorher=" + phoneNumber);
 
 		if (phoneNumber != null) {
+			phoneNumber.replaceAll(" ", "");
 			if (phoneNumber.startsWith("+417")) {
 				phoneNumber = phoneNumber.replace("+417", "07");
 			}
