@@ -342,7 +342,7 @@ public class ConnectorSunrise extends Connector {
 		Log.d(TAG, "** formatToSwissPhoneNumber vorher=" + phoneNumber);
 
 		if (phoneNumber != null) {
-			phoneNumber.replaceAll(" ", "");
+			phoneNumber = phoneNumber.replaceAll(" ", "");
 			if (phoneNumber.startsWith("+417")) {
 				phoneNumber = phoneNumber.replace("+417", "07");
 			}
