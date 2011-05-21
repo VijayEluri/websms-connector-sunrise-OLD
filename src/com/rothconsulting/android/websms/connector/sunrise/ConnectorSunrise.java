@@ -24,14 +24,10 @@ import java.util.ArrayList;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicNameValuePair;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.telephony.TelephonyManager;
 import de.ub0r.android.websms.connector.common.Connector;
 import de.ub0r.android.websms.connector.common.ConnectorCommand;
 import de.ub0r.android.websms.connector.common.ConnectorSpec;
@@ -48,20 +44,22 @@ import de.ub0r.android.websms.connector.common.WebSMSException;
 public class ConnectorSunrise extends Connector {
 	/** Tag for output. */
 	private static final String TAG = "Sunrise";
-
+	/** Dummy String */
+	private static final String DUMMY = "???";
 	/** Login URL. */
 	private static final String URL_LOGIN = "https://mip.sunrise.ch/mip/dyn/login/login";
 	/** SMS URL. */
 	private static final String URL_SENDSMS = "https://mip.sunrise.ch/mip/dyn/sms/sms?up_contactsPerPage=14&amp;lang=de&amp;country=us&amp;.lang=de&amp;.country=us&amp;synd=ig&amp;mid=36&amp;ifpctok=4219904978209905668&amp;exp_track_js=1&amp;exp_ids=17259&amp;parent=http://partnerpage.google.com&amp;libs=7ndonz73vUA/lib/liberror_tracker.js,RNMmLHDUuvI/lib/libcore.js,OqjxSeEKc8o/lib/libdynamic-height.js&amp;view=home";
 	/** SMS Credit */
-	private String SMS_CREDIT = "???";
+	private String SMS_CREDIT = DUMMY;
 	/** HTTP User agent. */
 	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:2.0.1) Gecko/20100101 Firefox/4.0.1";
 	/** SMS Encoding */
 	private static final String ENCODING = "UTF-8";
-
 	/** Check whether this connector is bootstrapping. */
 	private static boolean inBootstrap = false;
+	/** The phone number from parsing the http response */
+	private String PHONE_NUMBER = DUMMY;
 
 	/**
 	 * {@inheritDoc}
@@ -112,7 +110,8 @@ public class ConnectorSunrise extends Connector {
 	protected final void doBootstrap(final Context context, final Intent intent)
 			throws WebSMSException {
 		Log.d(TAG, "Start doBootstrap");
-		if (inBootstrap && !this.SMS_CREDIT.equals("???")) {
+		if (inBootstrap && !this.SMS_CREDIT.equals(DUMMY)
+				&& !this.PHONE_NUMBER.equals(DUMMY)) {
 			Log.d(TAG, "already in bootstrap: skip bootstrap");
 			return;
 		}
@@ -127,7 +126,9 @@ public class ConnectorSunrise extends Connector {
 				Preferences.PREFS_PASSWORD, "")));
 		postParameter.add(new BasicNameValuePair("_remember", "on"));
 
-		this.sendData(URL_LOGIN, context, postParameter);
+		this.sendData(URL_LOGIN, context, postParameter, false);
+		Log.d(TAG, "******* doBootstrap PhoneNumber=" + this.PHONE_NUMBER);
+
 		Log.d(TAG, "End doBootstrap");
 	}
 
@@ -140,7 +141,9 @@ public class ConnectorSunrise extends Connector {
 		Log.d(TAG, "Start doUpdate");
 		this.doBootstrap(context, intent);
 
-		this.sendData(URL_SENDSMS, context, null);
+		this.sendData(URL_SENDSMS, context, null, true);
+		Log.d(TAG, "******* doUpdate PhoneNumber=" + this.PHONE_NUMBER);
+
 		this.getSpec(context).setBalance(this.SMS_CREDIT);
 
 		Log.d(TAG, "End doUpdate");
@@ -205,11 +208,16 @@ public class ConnectorSunrise extends Connector {
 		postParameter.add(new BasicNameValuePair("message", text));
 		postParameter.add(new BasicNameValuePair("send", "send"));
 		postParameter.add(new BasicNameValuePair("task", "send"));
-		postParameter.add(new BasicNameValuePair("currentMsisdn", this
-				.getPhoneNumber(context, command)));
+		Log.d(TAG, "******* post PhoneNumber vorher=" + this.PHONE_NUMBER);
+		if (this.PHONE_NUMBER.equals(DUMMY)) {
+			this.doUpdate(context, intent);
+		}
+		postParameter.add(new BasicNameValuePair("currentMsisdn",
+				this.PHONE_NUMBER));
+		Log.d(TAG, "******* post PhoneNumber nachher=" + this.PHONE_NUMBER);
 
 		// push data
-		this.sendData(URL_SENDSMS, context, postParameter);
+		this.sendData(URL_SENDSMS, context, postParameter, true);
 		Log.d(TAG, "End doSend");
 	}
 
@@ -222,8 +230,8 @@ public class ConnectorSunrise extends Connector {
 	 * @throws WebSMSException
 	 */
 	private void sendData(final String fullTargetURL, final Context context,
-			final ArrayList<BasicNameValuePair> postParameter)
-			throws WebSMSException {
+			final ArrayList<BasicNameValuePair> postParameter,
+			final boolean parseHtml) throws WebSMSException {
 		Log.d(TAG, "Start sendData");
 		try {
 
@@ -247,26 +255,31 @@ public class ConnectorSunrise extends Connector {
 			// Log.d(TAG, "--Start HTTP RESPONSE--");
 			// Log.d(TAG, htmlText);
 			// Log.d(TAG, "--End HTTP RESPONSE--");
+			if (parseHtml) {
+				this.getPhoneNumber(htmlText, context);
+				String guthabenGratis = this.getGuthabenGratis(htmlText,
+						context);
+				String guthabenBezahlt = this.getGuthabenBezahlt(htmlText,
+						context);
 
-			String guthabenGratis = this.getGuthabenGratis(htmlText, context);
-			String guthabenBezahlt = this.getGuthabenBezahlt(htmlText, context);
+				if (guthabenGratis != null && !guthabenGratis.equals("")) {
+					guthabenGratis = context
+							.getString(R.string.connector_sunrise_gratis)
+							+ "="
+							+ guthabenGratis;
+					this.SMS_CREDIT = guthabenGratis;
+				}
+				if (guthabenBezahlt != null && !guthabenBezahlt.equals("")
+						&& !guthabenBezahlt.trim().equals("0")) {
+					guthabenBezahlt = ", "
+							+ context
+									.getString(R.string.connector_sunrise_bezahlt)
+							+ "=" + guthabenBezahlt;
+					this.SMS_CREDIT = guthabenGratis + guthabenBezahlt;
+				}
 
-			if (guthabenGratis != null && !guthabenGratis.equals("")) {
-				guthabenGratis = context
-						.getString(R.string.connector_sunrise_gratis)
-						+ "="
-						+ guthabenGratis;
-				this.SMS_CREDIT = guthabenGratis;
+				this.getSpec(context).setBalance(this.SMS_CREDIT);
 			}
-			if (guthabenBezahlt != null && !guthabenBezahlt.equals("")
-					&& !guthabenBezahlt.trim().equals("0")) {
-				guthabenBezahlt = ", "
-						+ context.getString(R.string.connector_sunrise_bezahlt)
-						+ "=" + guthabenBezahlt;
-				this.SMS_CREDIT = guthabenGratis + guthabenBezahlt;
-			}
-
-			this.getSpec(context).setBalance(this.SMS_CREDIT);
 
 			htmlText = null;
 
@@ -304,80 +317,17 @@ public class ConnectorSunrise extends Connector {
 		return guthabenBezahlt;
 	}
 
-	private String getPhoneNumber(final Context context,
-			final ConnectorCommand command) {
-
-		boolean isWrongNumber = false;
-		Log.d(TAG, "** command.getDefSender()=" + command.getDefSender());
-		Log.d(TAG, "** command.getCustomSender()=" + command.getCustomSender());
-
-		String phoneNumber = this.formatToSwissPhoneNumber(command
-				.getDefSender());
-
-		if (phoneNumber != null && !phoneNumber.equals("")
-				&& !phoneNumber.startsWith("07")) {
-			isWrongNumber = true;
-		}
-
-		if (phoneNumber == null || phoneNumber.trim().equals("")
-				|| !phoneNumber.startsWith("07")) {
-			TelephonyManager tm = (TelephonyManager) context
-					.getSystemService(Context.TELEPHONY_SERVICE);
-			// android.permission.READ_PHONE_STATE
-			phoneNumber = tm.getLine1Number();
-			Log.d(TAG, "** tm.getLine1Number()=" + phoneNumber);
-			phoneNumber = this.formatToSwissPhoneNumber(phoneNumber);
-			Log.d(TAG, "** formattet phone number=" + phoneNumber);
-		}
-
-		if (phoneNumber == null || isWrongNumber
-				|| !phoneNumber.startsWith("07")) {
-			Log.d(TAG, "** konnte keine gültige Telefonnummer finden");
-			this.showWrongNumberStatusBarNotification(context);
-		}
-		return phoneNumber;
-	}
-
-	private String formatToSwissPhoneNumber(String phoneNumber) {
-		Log.d(TAG, "** formatToSwissPhoneNumber vorher=" + phoneNumber);
-
-		if (phoneNumber != null) {
-			phoneNumber = phoneNumber.replaceAll(" ", "");
-			if (phoneNumber.startsWith("+417")) {
-				phoneNumber = phoneNumber.replace("+417", "07");
+	private void getPhoneNumber(final String htmlText, final Context context) {
+		if (this.PHONE_NUMBER.equals(DUMMY)) {
+			int indexStartPhoneNumber = htmlText.indexOf("currentMsisdn");
+			if (indexStartPhoneNumber > 0) {
+				this.PHONE_NUMBER = htmlText.substring(
+						indexStartPhoneNumber + 22, indexStartPhoneNumber + 32);
 			}
-			if (phoneNumber.startsWith("+4107")) {
-				phoneNumber = phoneNumber.replace("+4107", "07");
-			}
+			Log.d(TAG, "******* indexOf PhoneNumber =" + indexStartPhoneNumber);
 		}
-		Log.d(TAG, "** formatToSwissPhoneNumber nachher=" + phoneNumber);
-		return phoneNumber;
-	}
-
-	private void showWrongNumberStatusBarNotification(final Context context) {
-
-		String ns = Context.NOTIFICATION_SERVICE;
-		NotificationManager mNotificationManager = (NotificationManager) context
-				.getSystemService(ns);
-
-		long when = System.currentTimeMillis();
-
-		PendingIntent contentIntent = PendingIntent.getActivity(context, 0,
-				null, 0);
-
-		Notification notification = new Notification(
-				R.drawable.stat_notify_sms_pending,
-				context.getString(R.string.connector_sunrise_wrong_mobilenumber),
-				when);
-
-		notification
-				.setLatestEventInfo(
-						context,
-						context.getString(R.string.connector_sunrise_wrong_mobilenumber),
-						context.getString(R.string.connector_sunrise_wrong_mobilenumber_text),
-						contentIntent);
-
-		mNotificationManager.notify(1, notification);
+		Log.d(TAG, "******* PhoneNumber=" + this.PHONE_NUMBER);
 
 	}
+
 }
