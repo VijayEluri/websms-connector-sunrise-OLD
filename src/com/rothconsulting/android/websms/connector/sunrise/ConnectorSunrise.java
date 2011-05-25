@@ -44,20 +44,22 @@ import de.ub0r.android.websms.connector.common.WebSMSException;
 public class ConnectorSunrise extends Connector {
 	/** Tag for output. */
 	private static final String TAG = "Sunrise";
-
+	/** Dummy String */
+	private static final String DUMMY = "???";
 	/** Login URL. */
 	private static final String URL_LOGIN = "https://mip.sunrise.ch/mip/dyn/login/login";
 	/** SMS URL. */
-	private static final String URL_SENDSMS = "https://mip.sunrise.ch/mip/dyn/sms/sms?up_contactsPerPage=14&lang=de&country=us&.lang=de&.country=us&synd=ig&mid=36&ifpctok=8799310261136394284&exp_track_js=1&parent=http://partnerpage.google.com&libs=7ndonz73vUA/lib/liberror_tracker.js,vrFMICQBNJo/lib/libcore.js,OqjxSeEKc8o/lib/libdynamic-height.js&view=home";
+	private static final String URL_SENDSMS = "https://mip.sunrise.ch/mip/dyn/sms/sms?up_contactsPerPage=14&amp;lang=de&amp;country=us&amp;.lang=de&amp;.country=us&amp;synd=ig&amp;mid=36&amp;ifpctok=4219904978209905668&amp;exp_track_js=1&amp;exp_ids=17259&amp;parent=http://partnerpage.google.com&amp;libs=7ndonz73vUA/lib/liberror_tracker.js,RNMmLHDUuvI/lib/libcore.js,OqjxSeEKc8o/lib/libdynamic-height.js&amp;view=home";
 	/** SMS Credit */
-	private String SMS_CREDIT = "???";
+	private String SMS_CREDIT = DUMMY;
 	/** HTTP User agent. */
-	private static final String USER_AGENT = "Mozilla/5.0 (Windows; U; Windows NT 6.1; de; rv:1.9.2.15) Gecko/20110303 Firefox/3.6.15";
+	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:2.0.1) Gecko/20100101 Firefox/4.0.1";
 	/** SMS Encoding */
-	private static final String ENCODING = "UTF-8";
-
+	private static final String SMS_CHARACTER_ENCODING = "UTF-8";
 	/** Check whether this connector is bootstrapping. */
 	private static boolean inBootstrap = false;
+	/** The phone number from parsing the http response */
+	private String PHONE_NUMBER = DUMMY;
 
 	/**
 	 * {@inheritDoc}
@@ -108,7 +110,8 @@ public class ConnectorSunrise extends Connector {
 	protected final void doBootstrap(final Context context, final Intent intent)
 			throws WebSMSException {
 		Log.d(TAG, "Start doBootstrap");
-		if (inBootstrap && !this.SMS_CREDIT.equals("???")) {
+		if (inBootstrap && !this.SMS_CREDIT.equals(DUMMY)
+				&& !this.PHONE_NUMBER.equals(DUMMY)) {
 			Log.d(TAG, "already in bootstrap: skip bootstrap");
 			return;
 		}
@@ -123,7 +126,9 @@ public class ConnectorSunrise extends Connector {
 				Preferences.PREFS_PASSWORD, "")));
 		postParameter.add(new BasicNameValuePair("_remember", "on"));
 
-		this.sendData(URL_LOGIN, context, postParameter);
+		this.sendData(URL_LOGIN, context, postParameter, false, null, null);
+		Log.d(TAG, "******* doBootstrap PhoneNumber=" + this.PHONE_NUMBER);
+
 		Log.d(TAG, "End doBootstrap");
 	}
 
@@ -136,7 +141,9 @@ public class ConnectorSunrise extends Connector {
 		Log.d(TAG, "Start doUpdate");
 		this.doBootstrap(context, intent);
 
-		this.sendData(URL_SENDSMS, context, null);
+		this.sendData(URL_SENDSMS, context, null, true, null, null);
+		Log.d(TAG, "******* doUpdate PhoneNumber=" + this.PHONE_NUMBER);
+
 		this.getSpec(context).setBalance(this.SMS_CREDIT);
 
 		Log.d(TAG, "End doUpdate");
@@ -192,18 +199,39 @@ public class ConnectorSunrise extends Connector {
 		Log.d(TAG, "to.length=" + to.length);
 		Log.d(TAG, "to[0]=" + to[0]);
 		Log.d(TAG, "all recipients=" + recipients);
-		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
 
+		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
 		postParameter.add(new BasicNameValuePair("recipient", recipients
 				.toString()));
-		postParameter.add(new BasicNameValuePair("charsLeft", charsLeft));
-		postParameter.add(new BasicNameValuePair("type", "sms"));
+		byte[] fileByteArray = command.getFileByteArray();
+		if (fileByteArray != null) {
+			if (fileByteArray.length >= 200000) {
+				// Resize to 200KB
+				fileByteArray = Utils.resizeImage(fileByteArray, 200000);
+			}
+			postParameter.add(new BasicNameValuePair("charsLeft", ""
+					+ (3000 - text.length())));
+			postParameter.add(new BasicNameValuePair("type", "mms"));
+			Log.d(TAG, "Type = MMS!!!!");
+		} else {
+			postParameter.add(new BasicNameValuePair("charsLeft", charsLeft));
+			postParameter.add(new BasicNameValuePair("type", "sms"));
+			Log.d(TAG, "Type = SMS!!!!");
+		}
 		postParameter.add(new BasicNameValuePair("message", text));
 		postParameter.add(new BasicNameValuePair("send", "send"));
 		postParameter.add(new BasicNameValuePair("task", "send"));
+		Log.d(TAG, "******* post PhoneNumber vorher=" + this.PHONE_NUMBER);
+		if (this.PHONE_NUMBER.equals(DUMMY)) {
+			this.doUpdate(context, intent);
+		}
+		postParameter.add(new BasicNameValuePair("currentMsisdn",
+				this.PHONE_NUMBER));
+		Log.d(TAG, "******* post PhoneNumber nachher=" + this.PHONE_NUMBER);
 
 		// push data
-		this.sendData(URL_SENDSMS, context, postParameter);
+		this.sendData(URL_SENDSMS, context, postParameter, true,
+				command.getFileName(), fileByteArray);
 		Log.d(TAG, "End doSend");
 	}
 
@@ -216,16 +244,27 @@ public class ConnectorSunrise extends Connector {
 	 * @throws WebSMSException
 	 */
 	private void sendData(final String fullTargetURL, final Context context,
-			final ArrayList<BasicNameValuePair> postParameter)
-			throws WebSMSException {
+			final ArrayList<BasicNameValuePair> postParameter,
+			final boolean parseHtml, final String fileName,
+			final byte[] fileByteArray) throws WebSMSException {
 		Log.d(TAG, "Start sendData");
 		try {
 
 			Log.d(TAG, "URL: " + fullTargetURL);
 			// send data
-			Log.d(TAG, "send data: getHttpClient(...)");
-			HttpResponse response = Utils.getHttpClient(fullTargetURL, null,
-					postParameter, USER_AGENT, fullTargetURL, ENCODING, true);
+			HttpResponse response = null;
+			if (fileName == null && fileByteArray == null) {
+				Log.d(TAG, "sending SMS");
+				response = Utils.getHttpClient(fullTargetURL, null,
+						postParameter, USER_AGENT, fullTargetURL,
+						SMS_CHARACTER_ENCODING, true);
+			} else {
+				Log.d(TAG, "sending MMS");
+				response = Utils.getHttpClientPostMMS(fullTargetURL, null,
+						postParameter, USER_AGENT, fullTargetURL,
+						SMS_CHARACTER_ENCODING, true, fileName, fileByteArray);
+			}
+
 			int respStatus = response.getStatusLine().getStatusCode();
 			Log.d(TAG, "response status=" + respStatus);
 			Log.d(TAG, "response=\n" + response);
@@ -241,26 +280,31 @@ public class ConnectorSunrise extends Connector {
 			// Log.d(TAG, "--Start HTTP RESPONSE--");
 			// Log.d(TAG, htmlText);
 			// Log.d(TAG, "--End HTTP RESPONSE--");
+			if (parseHtml) {
+				this.getPhoneNumber(htmlText, context);
+				String guthabenGratis = this.getGuthabenGratis(htmlText,
+						context);
+				String guthabenBezahlt = this.getGuthabenBezahlt(htmlText,
+						context);
 
-			String guthabenGratis = this.getGuthabenGratis(htmlText, context);
-			String guthabenBezahlt = this.getGuthabenBezahlt(htmlText, context);
+				if (guthabenGratis != null && !guthabenGratis.equals("")) {
+					guthabenGratis = context
+							.getString(R.string.connector_sunrise_gratis)
+							+ "="
+							+ guthabenGratis;
+					this.SMS_CREDIT = guthabenGratis;
+				}
+				if (guthabenBezahlt != null && !guthabenBezahlt.equals("")
+						&& !guthabenBezahlt.trim().equals("0")) {
+					guthabenBezahlt = ", "
+							+ context
+									.getString(R.string.connector_sunrise_bezahlt)
+							+ "=" + guthabenBezahlt;
+					this.SMS_CREDIT = guthabenGratis + guthabenBezahlt;
+				}
 
-			if (guthabenGratis != null && !guthabenGratis.equals("")) {
-				guthabenGratis = context
-						.getString(R.string.connector_sunrise_gratis)
-						+ "="
-						+ guthabenGratis;
-				this.SMS_CREDIT = guthabenGratis;
+				this.getSpec(context).setBalance(this.SMS_CREDIT);
 			}
-			if (guthabenBezahlt != null && !guthabenBezahlt.equals("")
-					&& !guthabenBezahlt.trim().equals("0")) {
-				guthabenBezahlt = ", "
-						+ context.getString(R.string.connector_sunrise_bezahlt)
-						+ "=" + guthabenBezahlt;
-				this.SMS_CREDIT = guthabenGratis + guthabenBezahlt;
-			}
-
-			this.getSpec(context).setBalance(this.SMS_CREDIT);
 
 			htmlText = null;
 
@@ -296,6 +340,19 @@ public class ConnectorSunrise extends Connector {
 				+ guthabenBezahlt);
 
 		return guthabenBezahlt;
+	}
+
+	private void getPhoneNumber(final String htmlText, final Context context) {
+		if (this.PHONE_NUMBER.equals(DUMMY)) {
+			int indexStartPhoneNumber = htmlText.indexOf("currentMsisdn");
+			if (indexStartPhoneNumber > 0) {
+				this.PHONE_NUMBER = htmlText.substring(
+						indexStartPhoneNumber + 22, indexStartPhoneNumber + 32);
+			}
+			Log.d(TAG, "******* indexOf PhoneNumber =" + indexStartPhoneNumber);
+		}
+		Log.d(TAG, "******* PhoneNumber=" + this.PHONE_NUMBER);
+
 	}
 
 }

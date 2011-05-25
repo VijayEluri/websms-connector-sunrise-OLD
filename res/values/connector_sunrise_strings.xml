@@ -18,9 +18,8 @@
 	-->
 <resources>
 	<string name="app_name">WebSMS Connector: Sunrise</string>
-	<string name="app_version">0.2</string>
 	<string name="connector_sunrise_author">Koni</string>
-	<string name="connector_sunrise_name">Sunrise</string>
+	<string name="connector_sunrise_name">Sunrise MMS</string>
 	<string name="connector_sunrise_preferences">Preferences - Sunrise</string>
 	<string name="connector_sunrise_enable_">Enable Sunrise</string>
 	<string name="connector_sunrise_user_">Mail address</string>
