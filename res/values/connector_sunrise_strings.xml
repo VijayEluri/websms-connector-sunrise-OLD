@@ -17,11 +17,11 @@
 		not, see <http://www.gnu.org/licenses/>.
 	-->
 <resources>
-	<string name="app_name">WebSMS Connector: Sunrise</string>
+	<string name="app_name">WebSMS Connector: Sunrise MMS</string>
 	<string name="connector_sunrise_author">Koni</string>
 	<string name="connector_sunrise_name">Sunrise MMS</string>
-	<string name="connector_sunrise_preferences">Preferences - Sunrise</string>
-	<string name="connector_sunrise_enable_">Enable Sunrise</string>
+	<string name="connector_sunrise_preferences">Preferences - Sunrise MMS</string>
+	<string name="connector_sunrise_enable_">Enable Sunrise MMS</string>
 	<string name="connector_sunrise_user_">Mail address</string>
 	<string name="connector_sunrise_user_hint">user@sunrise.ch</string>
 	<string name="connector_sunrise_password_">E-Mail Password</string>
