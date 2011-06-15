@@ -115,6 +115,7 @@ public class ConnectorSunrise extends Connector {
 			Log.d(TAG, "already in bootstrap: skip bootstrap");
 			return;
 		}
+
 		inBootstrap = true;
 		final SharedPreferences p = PreferenceManager
 				.getDefaultSharedPreferences(context);
@@ -190,14 +191,11 @@ public class ConnectorSunrise extends Connector {
 				if (i > 0) {
 					recipients.append(",");
 				}
-				recipients.append(Utils.national2international(
-						command.getDefPrefix(),
-						Utils.getRecipientsNumber(to[i])));
+				recipients.append(to[i].trim());
 			}
 		}
-
 		Log.d(TAG, "to.length=" + to.length);
-		Log.d(TAG, "to[0]=" + to[0]);
+		Log.d(TAG, "to[0]    =" + to[0]);
 		Log.d(TAG, "all recipients=" + recipients);
 
 		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
