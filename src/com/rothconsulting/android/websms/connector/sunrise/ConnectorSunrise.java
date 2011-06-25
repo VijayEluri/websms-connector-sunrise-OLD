@@ -198,6 +198,21 @@ public class ConnectorSunrise extends Connector {
 		Log.d(TAG, "to[0]    =" + to[0]);
 		Log.d(TAG, "all recipients=" + recipients);
 
+		// Get Phone number in case it is entered.
+		// Sometimes it is needed when you have more than one number in your
+		// Sunrise account.
+		String phone = command.getDefSender();
+		if (phone != null && !phone.trim().equals("")) {
+			if (phone.trim().startsWith("+417")) {
+				phone.replace("+417", "07");
+			}
+			if (phone.trim().startsWith("+4107")) {
+				phone.replace("+41", "");
+			}
+			this.PHONE_NUMBER = phone;
+		}
+
+		// Building POST parameter
 		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
 		postParameter.add(new BasicNameValuePair("recipient", recipients
 				.toString()));
