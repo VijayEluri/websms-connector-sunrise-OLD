@@ -31,6 +31,6 @@
 	<string name="connector_sunrise_register_account_url">https://mip.sunrise.ch/mip/dyn/registration/regLogin</string>
 	<string name="connector_sunrise_gratis">Free</string>
 	<string name="connector_sunrise_bezahlt">Payed</string>
-	<string name="connector_sunrise_wrong_mobilenumber">WebSMS - Wrong mobilenumber configured!</string>
-	<string name="connector_sunrise_wrong_mobilenumber_text">Please enter a valid sunrise number or no mobilenumber.</string>
+	<string name="connector_sunrise_wrong_mobilenumber">Please go to preferences and enter a valid mobile number or no mobile number.</string>
+	<string name="connector_sunrise_max_10_recipients">Maximum 10 recipients per message allowed!</string>
 </resources>

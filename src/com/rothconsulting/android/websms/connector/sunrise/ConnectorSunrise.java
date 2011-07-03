@@ -60,6 +60,8 @@ public class ConnectorSunrise extends Connector {
 	private static boolean inBootstrap = false;
 	/** The phone number from parsing the http response */
 	private String PHONE_NUMBER = DUMMY;
+	/** Only when mobile number is entered, check for sender errors. */
+	private static boolean checkForSenderErrors = false;
 
 	/**
 	 * {@inheritDoc}
@@ -110,6 +112,7 @@ public class ConnectorSunrise extends Connector {
 	protected final void doBootstrap(final Context context, final Intent intent)
 			throws WebSMSException {
 		Log.d(TAG, "Start doBootstrap");
+		checkForSenderErrors = false;
 		if (inBootstrap && !this.SMS_CREDIT.equals(DUMMY)
 				&& !this.PHONE_NUMBER.equals(DUMMY)) {
 			Log.d(TAG, "already in bootstrap: skip bootstrap");
@@ -186,6 +189,12 @@ public class ConnectorSunrise extends Connector {
 
 		// SMS Recipients
 		String[] to = command.getRecipients();
+		if (to == null || to.length > 10) {
+			String error = context
+					.getString(R.string.connector_sunrise_max_10_recipients);
+			Log.d(TAG, "----- throwing WebSMSException: " + error);
+			throw new WebSMSException(error);
+		}
 		for (int i = 0; i < to.length; i++) {
 			if (to[i] != null && to[i].length() > 1) {
 				if (i > 0) {
@@ -202,13 +211,17 @@ public class ConnectorSunrise extends Connector {
 		// Sometimes it is needed when you have more than one number in your
 		// Sunrise account.
 		String phone = command.getDefSender();
+		Log.d(TAG, "******* phone 1 =" + phone);
+
 		if (phone != null && !phone.trim().equals("")) {
 			if (phone.trim().startsWith("+417")) {
-				phone.replace("+417", "07");
+				phone = phone.replace("+417", "07");
 			}
 			if (phone.trim().startsWith("+4107")) {
-				phone.replace("+41", "");
+				phone = phone.replace("+41", "");
 			}
+			Log.d(TAG, "******* phone 2 =" + phone);
+			checkForSenderErrors = true;
 			this.PHONE_NUMBER = phone;
 		}
 
@@ -265,14 +278,16 @@ public class ConnectorSunrise extends Connector {
 			if (htmlText == null || htmlText.length() == 0) {
 				throw new WebSMSException(context, R.string.error_service);
 			}
-			// Log.d(TAG, "--Start HTTP RESPONSE--");
+			// Log.d(TAG, "----- Start HTTP RESPONSE--");
 			// Log.d(TAG, htmlText);
-			// Log.d(TAG, "--End HTTP RESPONSE--");
+			// Log.d(TAG, "----- End HTTP RESPONSE--");
 			if (parseHtml) {
 				this.getPhoneNumber(htmlText, context);
 				String guthabenGratis = this.getGuthabenGratis(htmlText,
 						context);
 				String guthabenBezahlt = this.getGuthabenBezahlt(htmlText,
+						context);
+				String errorMessage = this.getErrorBlockMessage(htmlText,
 						context);
 
 				if (guthabenGratis != null && !guthabenGratis.equals("")) {
@@ -289,6 +304,11 @@ public class ConnectorSunrise extends Connector {
 									.getString(R.string.connector_sunrise_bezahlt)
 							+ "=" + guthabenBezahlt;
 					this.SMS_CREDIT = guthabenGratis + guthabenBezahlt;
+				}
+				if (errorMessage != null && !errorMessage.equals("")) {
+					Log.d(TAG, "----- throwing WebSMSException: "
+							+ errorMessage);
+					throw new WebSMSException(errorMessage);
 				}
 
 				this.getSpec(context).setBalance(this.SMS_CREDIT);
@@ -341,6 +361,33 @@ public class ConnectorSunrise extends Connector {
 		}
 		Log.d(TAG, "******* PhoneNumber=" + this.PHONE_NUMBER);
 
+	}
+
+	private String getErrorBlockMessage(final String htmlText,
+			final Context context) {
+		String message = "";
+		if (checkForSenderErrors) {
+			int indexStartErrorBlock = htmlText.indexOf("errorBlock");
+			int indexEndeErrorBlock = htmlText
+					.indexOf("Die SMS/MMS wurde nicht versandt");
+
+			if (indexStartErrorBlock > 0 && indexEndeErrorBlock > 0) {
+				message = htmlText.substring(indexStartErrorBlock + 28,
+						indexEndeErrorBlock);
+			}
+			Log.d(TAG, "indexStartOf errorBlock =" + indexStartErrorBlock
+					+ ", indexEndeOf errorBlock =" + indexEndeErrorBlock
+					+ " -- Message=" + message);
+
+			if (message.trim().startsWith(
+					"Die Absendernummer hat sich geändert")) {
+				message = context
+						.getString(R.string.connector_sunrise_wrong_mobilenumber);
+			} else {
+				message = "";
+			}
+		}
+		return message.trim();
 	}
 
 }

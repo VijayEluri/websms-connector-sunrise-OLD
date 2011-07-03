@@ -24,6 +24,6 @@
 	<string name="connector_sunrise_register_account_hint">Kein Konto? Registriere Dich hier...</string>
 	<string name="connector_sunrise_gratis">Gratis</string>
 	<string name="connector_sunrise_bezahlt">Bezahlt</string>
-	<string name="connector_sunrise_wrong_mobilenumber">WebSMS - Falsche Mobilnummer eingestellt!</string>
-	<string name="connector_sunrise_wrong_mobilenumber_text">In den Einstellungen korrekte Sunrise-Nummer oder keine Mobilnummer eingeben.</string>
+	<string name="connector_sunrise_wrong_mobilenumber">In den Einstellungen korrekte Mobilnummer oder keine Mobilnummer eingeben.</string>
+	<string name="connector_sunrise_max_10_recipients">Es können maximal 10 Empfänger pro Nachricht ausgewählt werden.</string>
 </resources>
