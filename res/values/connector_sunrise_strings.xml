@@ -20,8 +20,8 @@
 	<string name="app_name">WebSMS Connector: Sunrise MMS</string>
 	<string name="connector_sunrise_author">Koni</string>
 	<string name="connector_sunrise_name">Sunrise MMS</string>
-	<string name="connector_sunrise_preferences">Preferences - Sunrise MMS</string>
-	<string name="connector_sunrise_enable_">Enable Sunrise MMS</string>
+	<string name="connector_sunrise_preferences">Preferences - Sunrise</string>
+	<string name="connector_sunrise_enable_">Enable Sunrise</string>
 	<string name="connector_sunrise_user_">Mail address</string>
 	<string name="connector_sunrise_user_hint">user@sunrise.ch</string>
 	<string name="connector_sunrise_password_">E-Mail Password</string>
@@ -31,4 +31,6 @@
 	<string name="connector_sunrise_register_account_url">https://mip.sunrise.ch/mip/dyn/registration/regLogin</string>
 	<string name="connector_sunrise_gratis">Free</string>
 	<string name="connector_sunrise_bezahlt">Payed</string>
+	<string name="connector_sunrise_wrong_mobilenumber">Please go to preferences and enter a valid mobile number or no mobile number.</string>
+	<string name="connector_sunrise_max_10_recipients">Maximum 10 recipients per message allowed!</string>
 </resources>

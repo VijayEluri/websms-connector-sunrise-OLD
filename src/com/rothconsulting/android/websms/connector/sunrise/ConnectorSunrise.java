@@ -55,11 +55,13 @@ public class ConnectorSunrise extends Connector {
 	/** HTTP User agent. */
 	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:2.0.1) Gecko/20100101 Firefox/4.0.1";
 	/** SMS Encoding */
-	private static final String SMS_CHARACTER_ENCODING = "UTF-8";
+	private static final String ENCODING = "UTF-8";
 	/** Check whether this connector is bootstrapping. */
 	private static boolean inBootstrap = false;
 	/** The phone number from parsing the http response */
 	private String PHONE_NUMBER = DUMMY;
+	/** Only when mobile number is entered, check for sender errors. */
+	private static boolean checkForSenderErrors = false;
 
 	/**
 	 * {@inheritDoc}
@@ -69,8 +71,8 @@ public class ConnectorSunrise extends Connector {
 		final String name = context.getString(R.string.connector_sunrise_name);
 		ConnectorSpec c = new ConnectorSpec(name);
 		c.setAuthor(context.getString(R.string.connector_sunrise_author));
-		c.setMmsEnabled(true);
 		c.setBalance(null);
+		c.setMmsEnabled(true);
 		c.setCapabilities(ConnectorSpec.CAPABILITIES_BOOTSTRAP
 				| ConnectorSpec.CAPABILITIES_UPDATE
 				| ConnectorSpec.CAPABILITIES_SEND
@@ -111,11 +113,13 @@ public class ConnectorSunrise extends Connector {
 	protected final void doBootstrap(final Context context, final Intent intent)
 			throws WebSMSException {
 		Log.d(TAG, "Start doBootstrap");
+		checkForSenderErrors = false;
 		if (inBootstrap && !this.SMS_CREDIT.equals(DUMMY)
 				&& !this.PHONE_NUMBER.equals(DUMMY)) {
 			Log.d(TAG, "already in bootstrap: skip bootstrap");
 			return;
 		}
+
 		inBootstrap = true;
 		final SharedPreferences p = PreferenceManager
 				.getDefaultSharedPreferences(context);
@@ -165,45 +169,50 @@ public class ConnectorSunrise extends Connector {
 		String text = command.getText();
 		Log.d(TAG, "text.length()=" + text.length());
 		Log.d(TAG, "text=" + text);
-		String charsLeft = "";
-		if (text != null) {
-			if (text.length() <= 160) {
-				charsLeft = "" + (160 - text.length()) + " / 1";
-			}
-			if (text.length() > 160 && text.length() <= 320) {
-				charsLeft = "" + (320 - text.length()) + " / 2";
-			}
-			if (text.length() > 320 && text.length() <= 480) {
-				charsLeft = "" + (480 - text.length()) + " / 3";
-			}
-			if (text.length() > 480) {
-				text = text.substring(0, 480);
-				Log.d(TAG, "text gekürzt. length=" + text.length());
-				charsLeft = "" + (480 - text.length()) + " / 3";
-			}
-		}
-		Log.d(TAG, "charsLeft=" + charsLeft);
 
 		// SMS Recipients
 		String[] to = command.getRecipients();
+		if (to == null || to.length > 10) {
+			String error = context
+					.getString(R.string.connector_sunrise_max_10_recipients);
+			Log.d(TAG, "----- throwing WebSMSException: " + error);
+			throw new WebSMSException(error);
+		}
 		for (int i = 0; i < to.length; i++) {
 			if (to[i] != null && to[i].length() > 1) {
 				if (i > 0) {
 					recipients.append(",");
 				}
-				recipients.append(Utils.national2international(
-						command.getDefPrefix(),
-						Utils.getRecipientsNumber(to[i])));
+				recipients.append(to[i].trim());
 			}
 		}
-
 		Log.d(TAG, "to.length=" + to.length);
-		Log.d(TAG, "to[0]=" + to[0]);
+		Log.d(TAG, "to[0]    =" + to[0]);
 		Log.d(TAG, "all recipients=" + recipients);
 
+		// Get Phone number in case it is entered.
+		// Sometimes it is needed when you have more than one number in your
+		// Sunrise account.
+		String phone = command.getDefSender();
+		Log.d(TAG, "******* phone 1 =" + phone);
+
+		if (phone != null && !phone.trim().equals("")) {
+			if (phone.trim().startsWith("+417")) {
+				phone = phone.replace("+417", "07");
+			}
+			if (phone.trim().startsWith("+4107")) {
+				phone = phone.replace("+41", "");
+			}
+			Log.d(TAG, "******* phone 2 =" + phone);
+			checkForSenderErrors = true;
+			this.PHONE_NUMBER = phone;
+		}
+
+		// Building POST parameter
 		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
 		postParameter.add(new BasicNameValuePair("recipient", recipients
 				.toString()));
+
 		byte[] fileByteArray = command.getFileByteArray();
 		if (fileByteArray != null) {
 			if (fileByteArray.length >= 200000) {
@@ -215,6 +224,25 @@ public class ConnectorSunrise extends Connector {
 			postParameter.add(new BasicNameValuePair("type", "mms"));
 			Log.d(TAG, "Type = MMS!!!!");
 		} else {
+			String charsLeft = "";
+			if (text != null) {
+				if (text.length() <= 160) {
+					charsLeft = "" + (160 - text.length()) + " / 1";
+				}
+				if (text.length() > 160 && text.length() <= 320) {
+					charsLeft = "" + (320 - text.length()) + " / 2";
+				}
+				if (text.length() > 320 && text.length() <= 480) {
+					charsLeft = "" + (480 - text.length()) + " / 3";
+				}
+				if (text.length() > 480) {
+					text = text.substring(0, 480);
+					Log.d(TAG, "text gekürzt. length=" + text.length());
+					charsLeft = "" + (480 - text.length()) + " / 3";
+				}
+			}
+			Log.d(TAG, "charsLeft=" + charsLeft);
+
 			postParameter.add(new BasicNameValuePair("charsLeft", charsLeft));
 			postParameter.add(new BasicNameValuePair("type", "sms"));
 			Log.d(TAG, "Type = SMS!!!!");
@@ -257,13 +285,13 @@ public class ConnectorSunrise extends Connector {
 			if (fileName == null && fileByteArray == null) {
 				Log.d(TAG, "sending SMS");
 				response = Utils.getHttpClient(fullTargetURL, null,
-						postParameter, USER_AGENT, fullTargetURL,
-						SMS_CHARACTER_ENCODING, true);
+						postParameter, USER_AGENT, fullTargetURL, ENCODING,
+						true);
 			} else {
 				Log.d(TAG, "sending MMS");
 				response = Utils.getHttpClientPostMMS(fullTargetURL, null,
-						postParameter, USER_AGENT, fullTargetURL,
-						SMS_CHARACTER_ENCODING, true, fileName, fileByteArray);
+						postParameter, USER_AGENT, fullTargetURL, ENCODING,
+						true, fileName, fileByteArray);
 			}
 
 			int respStatus = response.getStatusLine().getStatusCode();
@@ -278,14 +306,16 @@ public class ConnectorSunrise extends Connector {
 			if (htmlText == null || htmlText.length() == 0) {
 				throw new WebSMSException(context, R.string.error_service);
 			}
-			// Log.d(TAG, "--Start HTTP RESPONSE--");
+			// Log.d(TAG, "----- Start HTTP RESPONSE--");
 			// Log.d(TAG, htmlText);
-			// Log.d(TAG, "--End HTTP RESPONSE--");
+			// Log.d(TAG, "----- End HTTP RESPONSE--");
 			if (parseHtml) {
 				this.getPhoneNumber(htmlText, context);
 				String guthabenGratis = this.getGuthabenGratis(htmlText,
 						context);
 				String guthabenBezahlt = this.getGuthabenBezahlt(htmlText,
+						context);
+				String errorMessage = this.getErrorBlockMessage(htmlText,
 						context);
 
 				if (guthabenGratis != null && !guthabenGratis.equals("")) {
@@ -302,6 +332,11 @@ public class ConnectorSunrise extends Connector {
 									.getString(R.string.connector_sunrise_bezahlt)
 							+ "=" + guthabenBezahlt;
 					this.SMS_CREDIT = guthabenGratis + guthabenBezahlt;
+				}
+				if (errorMessage != null && !errorMessage.equals("")) {
+					Log.d(TAG, "----- throwing WebSMSException: "
+							+ errorMessage);
+					throw new WebSMSException(errorMessage);
 				}
 
 				this.getSpec(context).setBalance(this.SMS_CREDIT);
@@ -354,6 +389,33 @@ public class ConnectorSunrise extends Connector {
 		}
 		Log.d(TAG, "******* PhoneNumber=" + this.PHONE_NUMBER);
 
+	}
+
+	private String getErrorBlockMessage(final String htmlText,
+			final Context context) {
+		String message = "";
+		if (checkForSenderErrors) {
+			int indexStartErrorBlock = htmlText.indexOf("errorBlock");
+			int indexEndeErrorBlock = htmlText
+					.indexOf("Die SMS/MMS wurde nicht versandt");
+
+			if (indexStartErrorBlock > 0 && indexEndeErrorBlock > 0) {
+				message = htmlText.substring(indexStartErrorBlock + 28,
+						indexEndeErrorBlock);
+			}
+			Log.d(TAG, "indexStartOf errorBlock =" + indexStartErrorBlock
+					+ ", indexEndeOf errorBlock =" + indexEndeErrorBlock
+					+ " -- Message=" + message);
+
+			if (message.trim().startsWith(
+					"Die Absendernummer hat sich geändert")) {
+				message = context
+						.getString(R.string.connector_sunrise_wrong_mobilenumber);
+			} else {
+				message = "";
+			}
+		}
+		return message.trim();
 	}
 
 }
