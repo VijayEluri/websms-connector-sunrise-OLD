@@ -69,6 +69,7 @@ public class ConnectorSunrise extends Connector {
 		final String name = context.getString(R.string.connector_sunrise_name);
 		ConnectorSpec c = new ConnectorSpec(name);
 		c.setAuthor(context.getString(R.string.connector_sunrise_author));
+		c.setMmsEnabled(true);
 		c.setBalance(null);
 		c.setCapabilities(ConnectorSpec.CAPABILITIES_BOOTSTRAP
 				| ConnectorSpec.CAPABILITIES_UPDATE
