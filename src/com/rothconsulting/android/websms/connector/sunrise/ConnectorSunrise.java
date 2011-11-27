@@ -74,6 +74,7 @@ public class ConnectorSunrise extends Connector {
 		ConnectorSpec c = new ConnectorSpec(name);
 		c.setAuthor(context.getString(R.string.connector_sunrise_author));
 		c.setBalance(null);
+		c.setLimitLength(480);
 		c.setAdUnitId(AD_UNITID);
 		c.setCapabilities(ConnectorSpec.CAPABILITIES_BOOTSTRAP
 				| ConnectorSpec.CAPABILITIES_UPDATE
