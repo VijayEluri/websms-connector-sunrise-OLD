@@ -23,7 +23,7 @@
 	<string name="connector_sunrise_preferences">Preferences - Sunrise</string>
 	<string name="connector_sunrise_enable_">Enable Sunrise</string>
 	<string name="connector_sunrise_user_">Login (Username)</string>
-	<string name="connector_sunrise_user_hint">Mobile-/Fixnet number or Sunrise email user@sunrise.ch</string>
+	<string name="connector_sunrise_user_hint">Mobilenumber or Sunrise email \'user@sunrise.ch\'</string>
 	<string name="connector_sunrise_password_">Password</string>
 	<string name="connector_sunrise_password_hint">Personal Code or Password of Sunrise E-Mail Account</string>
 	<string name="connector_sunrise_personal_code_lost">Personal code request</string>

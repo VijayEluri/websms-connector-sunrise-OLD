@@ -329,9 +329,9 @@ public class ConnectorSunrise extends Connector {
 			if (htmlText == null || htmlText.length() == 0) {
 				throw new WebSMSException(context, R.string.error_service);
 			}
-			Log.d(TAG, "----- Start HTTP RESPONSE--");
-			Log.d(TAG, htmlText);
-			Log.d(TAG, "----- End HTTP RESPONSE--");
+			// Log.d(TAG, "----- Start HTTP RESPONSE--");
+			// Log.d(TAG, htmlText);
+			// Log.d(TAG, "----- End HTTP RESPONSE--");
 			if (parseHtml) {
 				this.getPhoneNumber(htmlText, context);
 				String guthabenGratis = this.getGuthabenGratis(htmlText,
