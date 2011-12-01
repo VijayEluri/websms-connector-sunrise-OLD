@@ -29,7 +29,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.Toast;
 import de.ub0r.android.websms.connector.common.Connector;
 import de.ub0r.android.websms.connector.common.ConnectorCommand;
 import de.ub0r.android.websms.connector.common.ConnectorSpec;
@@ -75,16 +74,6 @@ public class ConnectorSunrise extends Connector {
 		if (p != null) {
 			String username = p.getString(Preferences.PREFS_USER, "");
 			if (username.indexOf("@") > 0) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private boolean isLoginWithTelefonnummer(final SharedPreferences p) {
-		if (p != null) {
-			String username = p.getString(Preferences.PREFS_USER, "");
-			if (username.indexOf("7") > 0) {
 				return true;
 			}
 		}
@@ -165,7 +154,7 @@ public class ConnectorSunrise extends Connector {
 			postParameter.add(new BasicNameValuePair("password", password));
 			postParameter.add(new BasicNameValuePair("_remember", "on"));
 			this.sendData(URL_EMAIL_LOGIN, context, postParameter, false);
-		} else if (this.isLoginWithTelefonnummer(p)) {
+		} else {
 			Log.d(TAG, "**** Login mit Telefonnummer");
 			postParameter.add(new BasicNameValuePair("LoginForm_Login",
 					username));
@@ -176,10 +165,6 @@ public class ConnectorSunrise extends Connector {
 							"LoginRedirectURL",
 							"https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewStandardCatalog-Browse?CatalogCategoryID=cK7AqFI.H90AAAEvTK41fuRr"));
 			this.sendData(URL_TEL_LOGIN, context, postParameter, false);
-		} else {
-			Log.d(TAG, "**** Login Username inkorrekt");
-			Toast.makeText(context, "Username ist falsch!", Toast.LENGTH_SHORT)
-					.show();
 		}
 
 		Log.d(TAG, "******* doBootstrap PhoneNumber=" + this.PHONE_NUMBER);
@@ -200,12 +185,8 @@ public class ConnectorSunrise extends Connector {
 
 		if (this.isLoginWithEmail(p)) {
 			this.sendData(URL_EMAIL_SENDSMS, context, null, true);
-		} else if (this.isLoginWithTelefonnummer(p)) {
-			this.sendData(URL_TEL_SENDSMS, context, null, true);
 		} else {
-			Log.d(TAG, "**** Login Username inkorrekt");
-			Toast.makeText(context, "Username ist falsch!", Toast.LENGTH_SHORT)
-					.show();
+			this.sendData(URL_TEL_SENDSMS, context, null, true);
 		}
 
 		Log.d(TAG, "******* doUpdate PhoneNumber=" + this.PHONE_NUMBER);
@@ -310,13 +291,10 @@ public class ConnectorSunrise extends Connector {
 
 		if (this.isLoginWithEmail(p)) {
 			this.sendData(URL_EMAIL_SENDSMS, context, postParameter, true);
-		} else if (this.isLoginWithTelefonnummer(p)) {
-			this.sendData(URL_TEL_SENDSMS, context, postParameter, true);
 		} else {
-			Log.d(TAG, "**** Login Username inkorrekt");
-			Toast.makeText(context, "Username ist falsch!", Toast.LENGTH_SHORT)
-					.show();
+			this.sendData(URL_TEL_SENDSMS, context, postParameter, true);
 		}
+
 		Log.d(TAG, "End doSend");
 	}
 
