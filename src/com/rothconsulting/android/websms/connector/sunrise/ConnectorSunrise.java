@@ -28,11 +28,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.util.Log;
+import android.widget.Toast;
 import de.ub0r.android.websms.connector.common.Connector;
 import de.ub0r.android.websms.connector.common.ConnectorCommand;
 import de.ub0r.android.websms.connector.common.ConnectorSpec;
 import de.ub0r.android.websms.connector.common.ConnectorSpec.SubConnectorSpec;
-import de.ub0r.android.websms.connector.common.Log;
 import de.ub0r.android.websms.connector.common.Utils;
 import de.ub0r.android.websms.connector.common.WebSMSException;
 
@@ -46,14 +47,19 @@ public class ConnectorSunrise extends Connector {
 	private static final String TAG = "Sunrise";
 	/** Dummy String */
 	private static final String DUMMY = "???";
-	/** Login URL. */
-	private static final String URL_LOGIN = "https://mip.sunrise.ch/mip/dyn/login/login";
-	/** SMS URL. */
-	private static final String URL_SENDSMS = "https://mip.sunrise.ch/mip/dyn/sms/sms?up_contactsPerPage=14&amp;lang=de&amp;country=us&amp;.lang=de&amp;.country=us&amp;synd=ig&amp;mid=36&amp;ifpctok=4219904978209905668&amp;exp_track_js=1&amp;exp_ids=17259&amp;parent=http://partnerpage.google.com&amp;libs=7ndonz73vUA/lib/liberror_tracker.js,RNMmLHDUuvI/lib/libcore.js,OqjxSeEKc8o/lib/libdynamic-height.js&amp;view=home";
+	/** Login URL with E-mail. */
+	private static final String URL_EMAIL_LOGIN = "https://mip.sunrise.ch/mip/dyn/login/login";
+	/** SMS URL with E-Mail. */
+	private static final String URL_EMAIL_SENDSMS = "https://mip.sunrise.ch/mip/dyn/sms/sms?up_contactsPerPage=14&amp;lang=de&amp;country=us&amp;.lang=de&amp;.country=us&amp;synd=ig&amp;mid=36&amp;ifpctok=4219904978209905668&amp;exp_track_js=1&amp;exp_ids=17259&amp;parent=http://partnerpage.google.com&amp;libs=7ndonz73vUA/lib/liberror_tracker.js,RNMmLHDUuvI/lib/libcore.js,OqjxSeEKc8o/lib/libdynamic-height.js&amp;view=home";
+	/** Login URL with Tel-Nr. */
+	private static final String URL_TEL_LOGIN = "https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewApplication-Login";
+	/** SMS URL with Tel-Nr. */
+	private static final String URL_TEL_SENDSMS = "http://mip.sunrise.ch/mip/dyn/login/smsMeinKonto?lang=de";
+
 	/** SMS Credit */
 	private String SMS_CREDIT = DUMMY;
 	/** HTTP User agent. */
-	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:2.0.1) Gecko/20100101 Firefox/4.0.1";
+	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:8.0) Gecko/20100101 Firefox/8.0";
 	/** SMS Encoding */
 	private static final String ENCODING = "UTF-8";
 	/** Check whether this connector is bootstrapping. */
@@ -64,6 +70,26 @@ public class ConnectorSunrise extends Connector {
 	private static boolean checkForSenderErrors = false;
 	/** My Ad-ID */
 	private static final String AD_UNITID = "a14ed1536d6c700";
+
+	private boolean isLoginWithEmail(final SharedPreferences p) {
+		if (p != null) {
+			String username = p.getString(Preferences.PREFS_USER, "");
+			if (username.indexOf("@") > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean isLoginWithTelefonnummer(final SharedPreferences p) {
+		if (p != null) {
+			String username = p.getString(Preferences.PREFS_USER, "");
+			if (username.indexOf("7") > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -127,16 +153,36 @@ public class ConnectorSunrise extends Connector {
 		final SharedPreferences p = PreferenceManager
 				.getDefaultSharedPreferences(context);
 
+		String username = p.getString(Preferences.PREFS_USER, "");
+		String password = p.getString(Preferences.PREFS_PASSWORD, "");
+
 		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
-		postParameter.add(new BasicNameValuePair("username", p.getString(
-				Preferences.PREFS_USER, "")));
-		postParameter.add(new BasicNameValuePair("password", p.getString(
-				Preferences.PREFS_PASSWORD, "")));
-		postParameter.add(new BasicNameValuePair("_remember", "on"));
 
-		this.sendData(URL_LOGIN, context, postParameter, false);
+		// Login-Username kann E-Mail oder Telefonnummer sein.
+		if (this.isLoginWithEmail(p)) {
+			Log.d(TAG, "**** Login mit E-Mail");
+			postParameter.add(new BasicNameValuePair("username", username));
+			postParameter.add(new BasicNameValuePair("password", password));
+			postParameter.add(new BasicNameValuePair("_remember", "on"));
+			this.sendData(URL_EMAIL_LOGIN, context, postParameter, false);
+		} else if (this.isLoginWithTelefonnummer(p)) {
+			Log.d(TAG, "**** Login mit Telefonnummer");
+			postParameter.add(new BasicNameValuePair("LoginForm_Login",
+					username));
+			postParameter.add(new BasicNameValuePair("LoginForm_Password",
+					password));
+			postParameter
+					.add(new BasicNameValuePair(
+							"LoginRedirectURL",
+							"https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewStandardCatalog-Browse?CatalogCategoryID=cK7AqFI.H90AAAEvTK41fuRr"));
+			this.sendData(URL_TEL_LOGIN, context, postParameter, false);
+		} else {
+			Log.d(TAG, "**** Login Username inkorrekt");
+			Toast.makeText(context, "Username ist falsch!", Toast.LENGTH_SHORT)
+					.show();
+		}
+
 		Log.d(TAG, "******* doBootstrap PhoneNumber=" + this.PHONE_NUMBER);
-
 		Log.d(TAG, "End doBootstrap");
 	}
 
@@ -149,9 +195,20 @@ public class ConnectorSunrise extends Connector {
 		Log.d(TAG, "Start doUpdate");
 		this.doBootstrap(context, intent);
 
-		this.sendData(URL_SENDSMS, context, null, true);
-		Log.d(TAG, "******* doUpdate PhoneNumber=" + this.PHONE_NUMBER);
+		final SharedPreferences p = PreferenceManager
+				.getDefaultSharedPreferences(context);
 
+		if (this.isLoginWithEmail(p)) {
+			this.sendData(URL_EMAIL_SENDSMS, context, null, true);
+		} else if (this.isLoginWithTelefonnummer(p)) {
+			this.sendData(URL_TEL_SENDSMS, context, null, true);
+		} else {
+			Log.d(TAG, "**** Login Username inkorrekt");
+			Toast.makeText(context, "Username ist falsch!", Toast.LENGTH_SHORT)
+					.show();
+		}
+
+		Log.d(TAG, "******* doUpdate PhoneNumber=" + this.PHONE_NUMBER);
 		this.getSpec(context).setBalance(this.SMS_CREDIT);
 
 		Log.d(TAG, "End doUpdate");
@@ -247,7 +304,19 @@ public class ConnectorSunrise extends Connector {
 		Log.d(TAG, "******* post PhoneNumber nachher=" + this.PHONE_NUMBER);
 
 		// push data
-		this.sendData(URL_SENDSMS, context, postParameter, true);
+
+		final SharedPreferences p = PreferenceManager
+				.getDefaultSharedPreferences(context);
+
+		if (this.isLoginWithEmail(p)) {
+			this.sendData(URL_EMAIL_SENDSMS, context, postParameter, true);
+		} else if (this.isLoginWithTelefonnummer(p)) {
+			this.sendData(URL_TEL_SENDSMS, context, postParameter, true);
+		} else {
+			Log.d(TAG, "**** Login Username inkorrekt");
+			Toast.makeText(context, "Username ist falsch!", Toast.LENGTH_SHORT)
+					.show();
+		}
 		Log.d(TAG, "End doSend");
 	}
 
@@ -282,9 +351,9 @@ public class ConnectorSunrise extends Connector {
 			if (htmlText == null || htmlText.length() == 0) {
 				throw new WebSMSException(context, R.string.error_service);
 			}
-			// Log.d(TAG, "----- Start HTTP RESPONSE--");
-			// Log.d(TAG, htmlText);
-			// Log.d(TAG, "----- End HTTP RESPONSE--");
+			Log.d(TAG, "----- Start HTTP RESPONSE--");
+			Log.d(TAG, htmlText);
+			Log.d(TAG, "----- End HTTP RESPONSE--");
 			if (parseHtml) {
 				this.getPhoneNumber(htmlText, context);
 				String guthabenGratis = this.getGuthabenGratis(htmlText,

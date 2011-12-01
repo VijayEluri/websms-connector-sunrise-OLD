@@ -22,12 +22,15 @@
 	<string name="connector_sunrise_name">Sunrise</string>
 	<string name="connector_sunrise_preferences">Preferences - Sunrise</string>
 	<string name="connector_sunrise_enable_">Enable Sunrise</string>
-	<string name="connector_sunrise_user_">Mail address</string>
-	<string name="connector_sunrise_user_hint">user@sunrise.ch</string>
-	<string name="connector_sunrise_password_">E-Mail Password</string>
-	<string name="connector_sunrise_password_hint">Password of your Sunrise E-Mail Account</string>
-	<string name="connector_sunrise_register_account">Sunrise Homepage (Mail/SMS)</string>
-	<string name="connector_sunrise_register_account_hint">No account? Register here...</string>
+	<string name="connector_sunrise_user_">Login (Username)</string>
+	<string name="connector_sunrise_user_hint">Mobile-/Fixnet number or Sunrise email user@sunrise.ch</string>
+	<string name="connector_sunrise_password_">Password</string>
+	<string name="connector_sunrise_password_hint">Personal Code or Password of Sunrise E-Mail Account</string>
+	<string name="connector_sunrise_personal_code_lost">Personal code request</string>
+	<string name="connector_sunrise_personal_code_lost_hint">Lost your personal code? Request it here...</string>
+	<string name="connector_sunrise_personal_code_lost_url">http://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewPersonalCodeRetrieval-New?SpcRetrievalMode=ECare</string>
+	<string name="connector_sunrise_register_account">Sunrise Mail Homepage</string>
+	<string name="connector_sunrise_register_account_hint">Want a sunrise mail account? Register here...</string>
 	<string name="connector_sunrise_register_account_url">https://mip.sunrise.ch/mip/dyn/registration/regLogin</string>
 	<string name="connector_sunrise_gratis">Free</string>
 	<string name="connector_sunrise_bezahlt">Payed</string>

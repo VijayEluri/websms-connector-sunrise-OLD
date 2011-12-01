@@ -19,9 +19,13 @@
 <resources>
 	<string name="connector_sunrise_preferences">Einstellungen - Sunrise</string>
 	<string name="connector_sunrise_enable_">Aktiviere Sunrise</string>
-	<string name="connector_sunrise_user_">Sunrise Mailadresse</string>
-	<string name="connector_sunrise_password_hint">Sunrise Mail Passwort</string>
-	<string name="connector_sunrise_register_account_hint">Kein Konto? Registriere Dich hier...</string>
+	<string name="connector_sunrise_user_">Login</string>
+	<string name="connector_sunrise_user_hint">Mobil-/Festnetznummer oder Sunrise Email \'user@sunrise.ch\'</string>
+	<string name="connector_sunrise_password_">Passwort</string>
+	<string name="connector_sunrise_password_hint">Personal Code oder Passwort des Sunrise E-Mail Accounts</string>
+	<string name="connector_sunrise_personal_code_lost">Personal Code anfragen</string>
+	<string name="connector_sunrise_personal_code_lost_hint">Personal Code zur Telefonnummer vergessen? Hier anfragen...</string>
+	<string name="connector_sunrise_register_account_hint">Brauchst du ein Sunrise Email Konto? Registriere Dich hier...</string>
 	<string name="connector_sunrise_gratis">Gratis</string>
 	<string name="connector_sunrise_bezahlt">Bezahlt</string>
 	<string name="connector_sunrise_wrong_mobilenumber">In den Einstellungen korrekte Mobilnummer oder keine Mobilnummer eingeben.</string>
