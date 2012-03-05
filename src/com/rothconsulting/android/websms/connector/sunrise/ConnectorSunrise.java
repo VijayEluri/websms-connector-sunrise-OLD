@@ -33,6 +33,7 @@ import de.ub0r.android.websms.connector.common.ConnectorCommand;
 import de.ub0r.android.websms.connector.common.ConnectorSpec;
 import de.ub0r.android.websms.connector.common.ConnectorSpec.SubConnectorSpec;
 import de.ub0r.android.websms.connector.common.Log;
+import de.ub0r.android.websms.connector.common.MmsUtils;
 import de.ub0r.android.websms.connector.common.Utils;
 import de.ub0r.android.websms.connector.common.WebSMSException;
 
@@ -74,6 +75,7 @@ public class ConnectorSunrise extends Connector {
 		ConnectorSpec c = new ConnectorSpec(name);
 		c.setAuthor(context.getString(R.string.connector_sunrise_author));
 		c.setBalance(null);
+		c.setLimitLength(3000);
 		c.setMmsEnabled(true);
 		c.setAdUnitId(AD_UNITID);
 		c.setCapabilities(ConnectorSpec.CAPABILITIES_BOOTSTRAP
@@ -220,7 +222,7 @@ public class ConnectorSunrise extends Connector {
 		if (fileByteArray != null) {
 			if (fileByteArray.length >= 200000) {
 				// Resize to 200KB
-				fileByteArray = Utils.resizeImage(fileByteArray, 200000);
+				fileByteArray = MmsUtils.resizeImage(fileByteArray, 200000);
 			}
 			postParameter.add(new BasicNameValuePair("charsLeft", ""
 					+ (3000 - text.length())));
@@ -303,6 +305,9 @@ public class ConnectorSunrise extends Connector {
 			if (respStatus != HttpURLConnection.HTTP_OK) {
 				throw new WebSMSException(context, R.string.error_http, ""
 						+ respStatus);
+			} else if (fileName != null && fileByteArray != null) {
+				// if MMS then save Image to mmssms.db
+
 			}
 			String htmlText = Utils.stream2str(
 					response.getEntity().getContent()).trim();

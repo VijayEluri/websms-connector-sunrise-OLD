@@ -4,9 +4,9 @@
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
-	<classpathentry kind="lib" path="libs/apache-mime4j-0.6.1.jar"/>
-	<classpathentry kind="lib" path="libs/httpclient-4.1.1.jar"/>
-	<classpathentry kind="lib" path="libs/httpcore-4.1.jar"/>
-	<classpathentry kind="lib" path="libs/httpmime-4.1.1.jar"/>
+	<classpathentry kind="lib" path="/websms-api/libs/apache-mime4j-0.6.1.jar"/>
+	<classpathentry kind="lib" path="/websms-api/libs/httpclient-4.1.1.jar"/>
+	<classpathentry kind="lib" path="/websms-api/libs/httpcore-4.1.jar"/>
+	<classpathentry kind="lib" path="/websms-api/libs/httpmime-4.1.1.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
