@@ -22,6 +22,7 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.message.BasicNameValuePair;
 
 import android.content.Context;
@@ -34,6 +35,7 @@ import de.ub0r.android.websms.connector.common.ConnectorCommand;
 import de.ub0r.android.websms.connector.common.ConnectorSpec;
 import de.ub0r.android.websms.connector.common.ConnectorSpec.SubConnectorSpec;
 import de.ub0r.android.websms.connector.common.Utils;
+import de.ub0r.android.websms.connector.common.Utils.HttpOptions;
 import de.ub0r.android.websms.connector.common.WebSMSException;
 
 /**
@@ -314,9 +316,24 @@ public class ConnectorSunrise extends Connector {
 
 			Log.d(TAG, "URL: " + fullTargetURL);
 			// send data
+			Log.d(TAG, "prepare: getHttpClient(...)");
+
+			HttpOptions httpOptions = new HttpOptions();
+			httpOptions.url = fullTargetURL;
+			httpOptions.userAgent = USER_AGENT;
+			httpOptions.encoding = ENCODING;
+			httpOptions.trustAll = true;
+			Log.d(TAG, "UrlEncodedFormEntity()");
+			if (postParameter != null) {
+				httpOptions.postData = new UrlEncodedFormEntity(postParameter);
+			}
+
 			Log.d(TAG, "send data: getHttpClient(...)");
-			HttpResponse response = Utils.getHttpClient(fullTargetURL, null,
-					postParameter, USER_AGENT, fullTargetURL, ENCODING, true);
+			HttpResponse response = Utils.getHttpClient(httpOptions);
+
+			// HttpResponse response = Utils.getHttpClient(fullTargetURL, null,
+			// postParameter, USER_AGENT, fullTargetURL, ENCODING, true);
+
 			int respStatus = response.getStatusLine().getStatusCode();
 			Log.d(TAG, "response status=" + respStatus);
 			Log.d(TAG, "response=\n" + response);
