@@ -28,7 +28,7 @@
 	<string name="connector_sunrise_password_hint">Personal Code or Password of Sunrise E-Mail Account</string>
 	<string name="connector_sunrise_personal_code_lost">Personal code request</string>
 	<string name="connector_sunrise_personal_code_lost_hint">Lost your personal code? Request it here...</string>
-	<string name="connector_sunrise_personal_code_lost_url">http://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewPersonalCodeRetrieval-New?SpcRetrievalMode=ECare</string>
+	<string name="connector_sunrise_personal_code_lost_url">http://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewPersonalCodeRetrieval-Mobile</string>
 	<string name="connector_sunrise_register_account">Sunrise Mail Homepage</string>
 	<string name="connector_sunrise_register_account_hint">Want a sunrise mail account? Register here...</string>
 	<string name="connector_sunrise_register_account_url">https://mip.sunrise.ch/mip/dyn/registration/regLogin</string>

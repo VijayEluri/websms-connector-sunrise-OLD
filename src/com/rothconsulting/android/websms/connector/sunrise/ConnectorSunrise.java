@@ -60,7 +60,7 @@ public class ConnectorSunrise extends Connector {
 	/** SMS Credit */
 	private String SMS_CREDIT = DUMMY;
 	/** HTTP User agent. */
-	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:8.0) Gecko/20100101 Firefox/8.0";
+	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0";
 	/** SMS Encoding */
 	private static final String ENCODING = "UTF-8";
 	/** Check whether this connector is bootstrapping. */
