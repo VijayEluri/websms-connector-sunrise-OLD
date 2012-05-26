@@ -3,6 +3,7 @@
 	<name>websms-connector-sunrise</name>
 	<comment></comment>
 	<projects>
+		<project>websms-api</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

@@ -17,8 +17,8 @@
 		not, see <http://www.gnu.org/licenses/>.
 	-->
 <resources>
-	<string name="connector_sunrise_preferences">Einstellungen - Sunrise</string>
-	<string name="connector_sunrise_enable_">Aktiviere Sunrise</string>
+	<string name="connector_sunrise_preferences">Einstellungen - Sunrise MMS</string>
+	<string name="connector_sunrise_enable_">Aktiviere Sunrise MMS</string>
 	<string name="connector_sunrise_user_">Login</string>
 	<string name="connector_sunrise_user_hint">Mobilnummer oder Sunrise Email \'user@sunrise.ch\'</string>
 	<string name="connector_sunrise_password_">Passwort</string>

@@ -321,11 +321,12 @@ public class ConnectorSunrise extends Connector {
 			HttpOptions httpOptions = new HttpOptions();
 			httpOptions.url = fullTargetURL;
 			httpOptions.userAgent = USER_AGENT;
-			httpOptions.encoding = ENCODING;
+			// httpOptions.encoding = ENCODING;
 			httpOptions.trustAll = true;
 			Log.d(TAG, "UrlEncodedFormEntity()");
 			if (postParameter != null) {
-				httpOptions.postData = new UrlEncodedFormEntity(postParameter);
+				httpOptions.postData = new UrlEncodedFormEntity(postParameter,
+						ENCODING);
 			}
 
 			Log.d(TAG, "send data: getHttpClient(...)");
