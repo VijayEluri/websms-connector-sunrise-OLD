@@ -295,6 +295,8 @@ public class ConnectorSunrise extends Connector {
 		postParameter.add(new BasicNameValuePair("currentMsisdn",
 				this.PHONE_NUMBER));
 
+		Log.d(TAG, "****** = PHONE_NUMBER = " + this.PHONE_NUMBER);
+
 		if (this.isLoginWithEmail(p)) {
 			this.sendData(URL_EMAIL_SENDSMS, context, postParameter, true);
 		} else {
