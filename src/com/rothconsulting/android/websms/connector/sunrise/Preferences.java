@@ -38,6 +38,8 @@ public final class Preferences extends PreferenceActivity {
 	static final String PREFS_SUNRISE_HOST = "sunrise_host";
 	/** Preference's name: enabled. */
 	static final String PREFS_ENABLED = "enable_sunrise";
+	/** Preference's name: username. */
+	static final String PREFS_DEFAULT_SENDER_NUMBER = "sunrise_default_sender_number";
 
 	/** User. */
 	private static String user;
@@ -63,9 +65,12 @@ public final class Preferences extends PreferenceActivity {
 	protected void onPause() {
 		super.onPause();
 		// check if prefs changed
-		final SharedPreferences p = PreferenceManager.getDefaultSharedPreferences(this);
-		needBootstrap |= user != null && !user.equals(p.getString(PREFS_USER, ""));
-		needBootstrap |= pw != null && !pw.equals(p.getString(PREFS_PASSWORD, ""));
+		final SharedPreferences p = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		needBootstrap |= user != null
+				&& !user.equals(p.getString(PREFS_USER, ""));
+		needBootstrap |= pw != null
+				&& !pw.equals(p.getString(PREFS_PASSWORD, ""));
 		user = p.getString(PREFS_USER, "");
 		pw = p.getString(PREFS_PASSWORD, "");
 	}
@@ -79,7 +84,8 @@ public final class Preferences extends PreferenceActivity {
 		if (needBootstrap) {
 			return true;
 		}
-		final SharedPreferences p = PreferenceManager.getDefaultSharedPreferences(context);
+		final SharedPreferences p = PreferenceManager
+				.getDefaultSharedPreferences(context);
 
 		return p.getString(PREFS_USER, "").length() == 0;
 	}

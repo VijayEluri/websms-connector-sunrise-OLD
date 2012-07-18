@@ -26,6 +26,8 @@
 	<string name="connector_sunrise_user_hint">Mobilenumber or Sunrise email \'user@sunrise.ch\'</string>
 	<string name="connector_sunrise_password_">Password</string>
 	<string name="connector_sunrise_password_hint">Personal Code or Password of Sunrise E-Mail Account</string>
+	<string name="connector_sunrise_default_sender_number_">Default Sender Number</string>
+	<string name="connector_sunrise_default_sender_number_hint">I case you have multiple Sunrise numbers, enter here the default sender number</string>
 	<string name="connector_sunrise_personal_code_lost">Personal code request</string>
 	<string name="connector_sunrise_personal_code_lost_hint">Lost your personal code? Request it here...</string>
 	<string name="connector_sunrise_personal_code_lost_url">http://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewPersonalCodeRetrieval-Mobile</string>

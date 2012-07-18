@@ -206,6 +206,9 @@ public class ConnectorSunrise extends Connector {
 		Log.d(TAG, "Start doSend");
 		this.doBootstrap(context, intent);
 
+		final SharedPreferences p = PreferenceManager
+				.getDefaultSharedPreferences(context);
+
 		ConnectorCommand command = new ConnectorCommand(intent);
 		StringBuilder recipients = new StringBuilder();
 		// SMS Text
@@ -268,6 +271,17 @@ public class ConnectorSunrise extends Connector {
 			checkForSenderErrors = true;
 			this.PHONE_NUMBER = phone;
 		}
+		Log.d(TAG, "******* post PhoneNumber vorher=" + this.PHONE_NUMBER);
+		String defaultSender = p.getString(
+				Preferences.PREFS_DEFAULT_SENDER_NUMBER, "");
+
+		if (!defaultSender.equals("")) {
+			this.PHONE_NUMBER = defaultSender;
+			checkForSenderErrors = true;
+		} else if (this.PHONE_NUMBER.equals(DUMMY)) {
+			this.doUpdate(context, intent);
+		}
+		Log.d(TAG, "******* post PhoneNumber nachher=" + this.PHONE_NUMBER);
 
 		// Building POST parameter
 		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
@@ -278,18 +292,8 @@ public class ConnectorSunrise extends Connector {
 		postParameter.add(new BasicNameValuePair("message", text));
 		postParameter.add(new BasicNameValuePair("send", "send"));
 		postParameter.add(new BasicNameValuePair("task", "send"));
-		Log.d(TAG, "******* post PhoneNumber vorher=" + this.PHONE_NUMBER);
-		if (this.PHONE_NUMBER.equals(DUMMY)) {
-			this.doUpdate(context, intent);
-		}
 		postParameter.add(new BasicNameValuePair("currentMsisdn",
 				this.PHONE_NUMBER));
-		Log.d(TAG, "******* post PhoneNumber nachher=" + this.PHONE_NUMBER);
-
-		// push data
-
-		final SharedPreferences p = PreferenceManager
-				.getDefaultSharedPreferences(context);
 
 		if (this.isLoginWithEmail(p)) {
 			this.sendData(URL_EMAIL_SENDSMS, context, postParameter, true);

@@ -28,6 +28,10 @@
 		android:title="@string/connector_sunrise_password_" android:dialogTitle="@string/connector_sunrise_password_"
 		android:summary="@string/connector_sunrise_password_hint"
 		android:inputType="textPassword" android:dependency="enable_sunrise" />
+	<EditTextPreference android:key="sunrise_default_sender_number"
+		android:title="@string/connector_sunrise_default_sender_number_" android:dialogTitle="@string/connector_sunrise_default_sender_number_"
+		android:summary="@string/connector_sunrise_default_sender_number_hint"
+		android:inputType="phone" android:dependency="enable_sunrise" />
 	<PreferenceScreen android:title="@string/connector_sunrise_personal_code_lost"
 		android:summary="@string/connector_sunrise_personal_code_lost_hint">
 		<intent android:action="android.intent.action.VIEW"
