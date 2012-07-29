@@ -23,11 +23,11 @@
 	<string name="connector_sunrise_user_hint">Mobilnummer oder Sunrise Email \'user@sunrise.ch\'</string>
 	<string name="connector_sunrise_password_">Passwort</string>
 	<string name="connector_sunrise_password_hint">Personal Code oder Passwort des Sunrise E-Mail Accounts</string>
-	<string name="connector_sunrise_default_sender_number_">Standard Sender Nummer</string>
-	<string name="connector_sunrise_default_sender_number_hint">Falls du mehrere Sunrise Nummern hast, kannst du hier die Standard Absender Nummer definieren</string>
+	<string name="connector_sunrise_defined_sender_number_">Absender Nummer (optional)</string>
+	<string name="connector_sunrise_defined_sender_number_hint">Nur verwenden falls du in deinem Konto mehrere Sunrise Nummern hast. Definiere hier die gewünschte Absender Nummer.</string>
 	<string name="connector_sunrise_personal_code_lost">Personal Code anfragen</string>
-	<string name="connector_sunrise_personal_code_lost_hint">Personal Code zur Telefonnummer vergessen? Hier anfragen...</string>
-	<string name="connector_sunrise_register_account_hint">Brauchst du ein Sunrise Email Konto? Registriere Dich hier...</string>
+	<string name="connector_sunrise_personal_code_lost_hint">Personal Code zur Telefonnummer vergessen? Hier anfragen…</string>
+	<string name="connector_sunrise_register_account_hint">Brauchst du ein Sunrise Email Konto? Registriere Dich hier…</string>
 	<string name="connector_sunrise_gratis">Gratis</string>
 	<string name="connector_sunrise_bezahlt">Bezahlt</string>
 	<string name="connector_sunrise_wrong_mobilenumber">In den Einstellungen korrekte Mobilnummer oder keine Mobilnummer eingeben.</string>

@@ -30,16 +30,16 @@ import android.preference.PreferenceManager;
  * @author flx
  */
 public final class Preferences extends PreferenceActivity {
-	/** Preference's name: username. */
+	/** Preference's username. */
 	static final String PREFS_USER = "sunrise_user";
-	/** Preference's name: user's password. */
+	/** Preference's user's password. */
 	static final String PREFS_PASSWORD = "sunrise_password";
-	/** Preference's name: sunrise hostname id. */
+	/** Preference's sunrise hostname id. */
 	static final String PREFS_SUNRISE_HOST = "sunrise_host";
-	/** Preference's name: enabled. */
+	/** Preference's enabled. */
 	static final String PREFS_ENABLED = "enable_sunrise";
-	/** Preference's name: username. */
-	static final String PREFS_DEFAULT_SENDER_NUMBER = "sunrise_default_sender_number";
+	/** Preference's defined sender in case the account has multiple numbers. */
+	static final String PREFS_DEFINED_SENDER_NUMBER = "sunrise_defined_sender_number";
 
 	/** User. */
 	private static String user;

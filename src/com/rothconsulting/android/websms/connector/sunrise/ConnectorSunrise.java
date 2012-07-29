@@ -56,11 +56,13 @@ public class ConnectorSunrise extends Connector {
 	private static final String URL_TEL_LOGIN = "https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewApplication-Login";
 	/** SMS URL with Tel-Nr. */
 	private static final String URL_TEL_SENDSMS = "http://mip.sunrise.ch/mip/dyn/login/smsMeinKonto?lang=de";
+	/** URL when multiple numbers present */
+	private static final String URL_CHOOSE_NUMBER = "https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewECareMessaging-Encrypt";
 
 	/** SMS Credit */
 	private String SMS_CREDIT = DUMMY;
 	/** HTTP User agent. */
-	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0";
+	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:14.0) Gecko/20100101 Firefox/14.0.1";
 	/** SMS Encoding */
 	private static final String ENCODING = "UTF-8";
 	/** Check whether this connector is bootstrapping. */
@@ -79,6 +81,22 @@ public class ConnectorSunrise extends Connector {
 				return true;
 			}
 		}
+		return false;
+	}
+
+	private boolean isDefinedSenderEntered(final SharedPreferences p) {
+		if (p != null) {
+			String definedSender = p.getString(
+					Preferences.PREFS_DEFINED_SENDER_NUMBER, "");
+			if (definedSender != null && definedSender.length() > 9) {
+				Log.d(TAG,
+						"*********** isDefinedSenderEntered = true definedSender="
+								+ definedSender);
+				return true;
+			}
+		}
+		Log.d(TAG, "*********** isDefinedSenderEntered = false");
+
 		return false;
 	}
 
@@ -132,8 +150,14 @@ public class ConnectorSunrise extends Connector {
 	@Override
 	protected final void doBootstrap(final Context context, final Intent intent)
 			throws WebSMSException {
-		Log.d(TAG, "Start doBootstrap");
+		Log.d(TAG, "************************************************");
+		Log.d(TAG, "*** Start doBootstrap");
+		Log.d(TAG, "************************************************");
 		checkForSenderErrors = false;
+
+		final SharedPreferences p = PreferenceManager
+				.getDefaultSharedPreferences(context);
+
 		if (inBootstrap && !this.SMS_CREDIT.equals(DUMMY)
 				&& !this.PHONE_NUMBER.equals(DUMMY)) {
 			Log.d(TAG, "already in bootstrap: skip bootstrap");
@@ -141,8 +165,6 @@ public class ConnectorSunrise extends Connector {
 		}
 
 		inBootstrap = true;
-		final SharedPreferences p = PreferenceManager
-				.getDefaultSharedPreferences(context);
 
 		String username = p.getString(Preferences.PREFS_USER, "");
 		String password = p.getString(Preferences.PREFS_PASSWORD, "");
@@ -170,7 +192,9 @@ public class ConnectorSunrise extends Connector {
 		}
 
 		Log.d(TAG, "******* doBootstrap PhoneNumber=" + this.PHONE_NUMBER);
-		Log.d(TAG, "End doBootstrap");
+		Log.d(TAG, "************************************************");
+		Log.d(TAG, "*** Ende doBootstrap");
+		Log.d(TAG, "************************************************");
 	}
 
 	/**
@@ -179,7 +203,9 @@ public class ConnectorSunrise extends Connector {
 	@Override
 	protected final void doUpdate(final Context context, final Intent intent)
 			throws WebSMSException {
-		Log.d(TAG, "Start doUpdate");
+		Log.d(TAG, "************************************************");
+		Log.d(TAG, "*** Start doUpdate");
+		Log.d(TAG, "************************************************");
 		this.doBootstrap(context, intent);
 
 		final SharedPreferences p = PreferenceManager
@@ -188,13 +214,25 @@ public class ConnectorSunrise extends Connector {
 		if (this.isLoginWithEmail(p)) {
 			this.sendData(URL_EMAIL_SENDSMS, context, null, true);
 		} else {
+			// if default sender for multiple numbers is present
+			if (this.isDefinedSenderEntered(p)) {
+				String defaultSender = p.getString(
+						Preferences.PREFS_DEFINED_SENDER_NUMBER, "");
+				ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
+				postParameter.add(new BasicNameValuePair("PhoneNumber",
+						defaultSender));
+				this.sendData(URL_CHOOSE_NUMBER, context, postParameter, true);
+			}
+
 			this.sendData(URL_TEL_SENDSMS, context, null, true);
 		}
 
 		Log.d(TAG, "******* doUpdate PhoneNumber=" + this.PHONE_NUMBER);
 		this.getSpec(context).setBalance(this.SMS_CREDIT);
 
-		Log.d(TAG, "End doUpdate");
+		Log.d(TAG, "************************************************");
+		Log.d(TAG, "*** Ende doUpdate");
+		Log.d(TAG, "************************************************");
 	}
 
 	/**
@@ -203,7 +241,9 @@ public class ConnectorSunrise extends Connector {
 	@Override
 	protected final void doSend(final Context context, final Intent intent)
 			throws WebSMSException {
-		Log.d(TAG, "Start doSend");
+		Log.d(TAG, "************************************************");
+		Log.d(TAG, "*** Start doSend");
+		Log.d(TAG, "************************************************");
 		this.doBootstrap(context, intent);
 
 		final SharedPreferences p = PreferenceManager
@@ -254,31 +294,31 @@ public class ConnectorSunrise extends Connector {
 		Log.d(TAG, "to[0]    =" + to[0]);
 		Log.d(TAG, "all recipients=" + recipients);
 
-		// Get Phone number in case it is entered.
-		// Sometimes it is needed when you have more than one number in your
-		// Sunrise account.
-		String phone = command.getDefSender();
-		Log.d(TAG, "******* phone 1 =" + phone);
+		// if defined sender for multiple numbers is present
+		if (!this.isLoginWithEmail(p) && this.isDefinedSenderEntered(p)) {
 
-		if (phone != null && !phone.trim().equals("")) {
-			if (phone.trim().startsWith("+417")) {
-				phone = phone.replace("+417", "07");
+			String definedSender = p.getString(
+					Preferences.PREFS_DEFINED_SENDER_NUMBER, "");
+
+			if (definedSender.trim().startsWith("+417")) {
+				definedSender = definedSender.replace("+417", "07");
 			}
-			if (phone.trim().startsWith("+4107")) {
-				phone = phone.replace("+41", "");
+			if (definedSender.trim().startsWith("+4107")) {
+				definedSender = definedSender.replace("+41", "");
 			}
-			Log.d(TAG, "******* phone 2 =" + phone);
+
+			ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
+			postParameter.add(new BasicNameValuePair("PhoneNumber",
+					definedSender));
+			this.sendData(URL_CHOOSE_NUMBER, context, postParameter, true);
+
+			Log.d(TAG, "******* definedSender =" + definedSender);
 			checkForSenderErrors = true;
-			this.PHONE_NUMBER = phone;
+			this.PHONE_NUMBER = definedSender;
+
 		}
-		Log.d(TAG, "******* post PhoneNumber vorher=" + this.PHONE_NUMBER);
-		String defaultSender = p.getString(
-				Preferences.PREFS_DEFAULT_SENDER_NUMBER, "");
 
-		if (!defaultSender.equals("")) {
-			this.PHONE_NUMBER = defaultSender;
-			checkForSenderErrors = true;
-		} else if (this.PHONE_NUMBER.equals(DUMMY)) {
+		if (this.PHONE_NUMBER.equals(DUMMY)) {
 			this.doUpdate(context, intent);
 		}
 		Log.d(TAG, "******* post PhoneNumber nachher=" + this.PHONE_NUMBER);
@@ -303,7 +343,9 @@ public class ConnectorSunrise extends Connector {
 			this.sendData(URL_TEL_SENDSMS, context, postParameter, true);
 		}
 
-		Log.d(TAG, "End doSend");
+		Log.d(TAG, "************************************************");
+		Log.d(TAG, "*** Ende doSend");
+		Log.d(TAG, "************************************************");
 	}
 
 	/**
@@ -317,7 +359,10 @@ public class ConnectorSunrise extends Connector {
 	private void sendData(final String fullTargetURL, final Context context,
 			final ArrayList<BasicNameValuePair> postParameter,
 			final boolean parseHtml) throws WebSMSException {
-		Log.d(TAG, "Start sendData");
+
+		Log.d(TAG, "************************************************");
+		Log.d(TAG, "*** Start sendData");
+		Log.d(TAG, "************************************************");
 		try {
 
 			Log.d(TAG, "URL: " + fullTargetURL);
@@ -395,6 +440,10 @@ public class ConnectorSunrise extends Connector {
 			Log.e(TAG, null, e);
 			throw new WebSMSException(e.getMessage());
 		}
+		Log.d(TAG, "************************************************");
+		Log.d(TAG, "*** Ende sendData");
+		Log.d(TAG, "************************************************");
+
 	}
 
 	private String getGuthabenGratis(final String htmlText,
