@@ -54,6 +54,8 @@ public class ConnectorSunrise extends Connector {
 	private static final String URL_EMAIL_SENDSMS = "https://mip.sunrise.ch/mip/dyn/sms/sms?up_contactsPerPage=14&amp;lang=de&amp;country=us&amp;.lang=de&amp;.country=us&amp;synd=ig&amp;mid=36&amp;ifpctok=4219904978209905668&amp;exp_track_js=1&amp;exp_ids=17259&amp;parent=http://partnerpage.google.com&amp;libs=7ndonz73vUA/lib/liberror_tracker.js,RNMmLHDUuvI/lib/libcore.js,OqjxSeEKc8o/lib/libdynamic-height.js&amp;view=home";
 	/** Login URL with Tel-Nr. */
 	private static final String URL_TEL_LOGIN = "https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewApplication-Login";
+	/** URL to get balance */
+	private static final String URL_TEL_SMS_SENDER = "https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewStandardCatalog-Browse?CatalogCategoryID=cK7AqFI.H90AAAEvTK41fuRr";
 	/** SMS URL with Tel-Nr. */
 	private static final String URL_TEL_SENDSMS = "http://mip.sunrise.ch/mip/dyn/login/smsMeinKonto?lang=de";
 	/** URL when multiple numbers present */
@@ -89,13 +91,12 @@ public class ConnectorSunrise extends Connector {
 			String definedSender = p.getString(
 					Preferences.PREFS_DEFINED_SENDER_NUMBER, "");
 			if (definedSender != null && definedSender.length() > 9) {
-				Log.d(TAG,
-						"*********** isDefinedSenderEntered = true definedSender="
-								+ definedSender);
+				this.log("*********** isDefinedSenderEntered = true definedSender="
+						+ definedSender);
 				return true;
 			}
 		}
-		Log.d(TAG, "*********** isDefinedSenderEntered = false");
+		this.log("*********** isDefinedSenderEntered = false");
 
 		return false;
 	}
@@ -126,7 +127,9 @@ public class ConnectorSunrise extends Connector {
 	@Override
 	public final ConnectorSpec updateSpec(final Context context,
 			final ConnectorSpec connectorSpec) {
-		Log.d(TAG, "Start updateSpec");
+		this.log("************************************************");
+		this.log("*** Start updateSpec");
+		this.log("************************************************");
 		final SharedPreferences p = PreferenceManager
 				.getDefaultSharedPreferences(context);
 		if (p.getBoolean(Preferences.PREFS_ENABLED, false)) {
@@ -140,7 +143,9 @@ public class ConnectorSunrise extends Connector {
 		} else {
 			connectorSpec.setStatus(ConnectorSpec.STATUS_INACTIVE);
 		}
-		Log.d(TAG, "End updateSpec");
+		this.log("************************************************");
+		this.log("*** End updateSpec");
+		this.log("************************************************");
 		return connectorSpec;
 	}
 
@@ -150,9 +155,9 @@ public class ConnectorSunrise extends Connector {
 	@Override
 	protected final void doBootstrap(final Context context, final Intent intent)
 			throws WebSMSException {
-		Log.d(TAG, "************************************************");
-		Log.d(TAG, "*** Start doBootstrap");
-		Log.d(TAG, "************************************************");
+		this.log("************************************************");
+		this.log("*** Start doBootstrap");
+		this.log("************************************************");
 		checkForSenderErrors = false;
 
 		final SharedPreferences p = PreferenceManager
@@ -160,9 +165,11 @@ public class ConnectorSunrise extends Connector {
 
 		if (inBootstrap && !this.SMS_CREDIT.equals(DUMMY)
 				&& !this.PHONE_NUMBER.equals(DUMMY)) {
-			Log.d(TAG, "already in bootstrap: skip bootstrap");
+			this.log("already in bootstrap: skip bootstrap");
 			return;
 		}
+
+		this.log("In new bootstrap");
 
 		inBootstrap = true;
 
@@ -173,28 +180,36 @@ public class ConnectorSunrise extends Connector {
 
 		// Login-Username kann E-Mail oder Telefonnummer sein.
 		if (this.isLoginWithEmail(p)) {
-			Log.d(TAG, "**** Login mit E-Mail");
+			this.log("**** Login mit E-Mail");
 			postParameter.add(new BasicNameValuePair("username", username));
 			postParameter.add(new BasicNameValuePair("password", password));
 			postParameter.add(new BasicNameValuePair("_remember", "on"));
 			this.sendData(URL_EMAIL_LOGIN, context, postParameter, false);
 		} else {
-			Log.d(TAG, "**** Login mit Telefonnummer");
+			this.log("**** Login mit Telefonnummer");
 			postParameter.add(new BasicNameValuePair("LoginForm_Login",
 					username));
 			postParameter.add(new BasicNameValuePair("LoginForm_Password",
 					password));
+			postParameter.add(new BasicNameValuePair("LoginRedirectSecret",
+					"d285715d94fb4cd4613ad70aaeb8f735"));
 			postParameter
 					.add(new BasicNameValuePair(
 							"LoginRedirectURL",
-							"https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewStandardCatalog-Browse?CatalogCategoryID=cK7AqFI.H90AAAEvTK41fuRr"));
+							"https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewStandardCatalog-Browse?CatalogCategoryID=zv7AqFI.Z.gAAAEkbGdQzDCf&LoginOrigin=Mein%20Konto&LoginDestination=Mein%20Konto"));
+			postParameter
+					.add(new BasicNameValuePair(
+							"ajaxhref",
+							"http://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewPersonalCodeRetrieval-New?SpcRetrievalMode=ECare"));
+			postParameter.add(new BasicNameValuePair("ajaxhref", ""));
+
 			this.sendData(URL_TEL_LOGIN, context, postParameter, false);
 		}
 
-		Log.d(TAG, "******* doBootstrap PhoneNumber=" + this.PHONE_NUMBER);
-		Log.d(TAG, "************************************************");
-		Log.d(TAG, "*** Ende doBootstrap");
-		Log.d(TAG, "************************************************");
+		this.log("**** at end of bootstrap phonenumber=" + this.PHONE_NUMBER);
+		this.log("************************************************");
+		this.log("*** Ende doBootstrap");
+		this.log("************************************************");
 	}
 
 	/**
@@ -203,9 +218,9 @@ public class ConnectorSunrise extends Connector {
 	@Override
 	protected final void doUpdate(final Context context, final Intent intent)
 			throws WebSMSException {
-		Log.d(TAG, "************************************************");
-		Log.d(TAG, "*** Start doUpdate");
-		Log.d(TAG, "************************************************");
+		this.log("************************************************");
+		this.log("*** Start doUpdate");
+		this.log("************************************************");
 		this.doBootstrap(context, intent);
 
 		final SharedPreferences p = PreferenceManager
@@ -224,15 +239,16 @@ public class ConnectorSunrise extends Connector {
 				this.sendData(URL_CHOOSE_NUMBER, context, postParameter, true);
 			}
 
-			this.sendData(URL_TEL_SENDSMS, context, null, true);
+			this.sendData(URL_TEL_SMS_SENDER, context, null, true); // cookie
+			this.sendData(URL_TEL_SENDSMS, context, null, true); // get credit
 		}
 
-		Log.d(TAG, "******* doUpdate PhoneNumber=" + this.PHONE_NUMBER);
+		this.log("******* doUpdate PhoneNumber=" + this.PHONE_NUMBER);
 		this.getSpec(context).setBalance(this.SMS_CREDIT);
 
-		Log.d(TAG, "************************************************");
-		Log.d(TAG, "*** Ende doUpdate");
-		Log.d(TAG, "************************************************");
+		this.log("************************************************");
+		this.log("*** Ende doUpdate");
+		this.log("************************************************");
 	}
 
 	/**
@@ -241,9 +257,9 @@ public class ConnectorSunrise extends Connector {
 	@Override
 	protected final void doSend(final Context context, final Intent intent)
 			throws WebSMSException {
-		Log.d(TAG, "************************************************");
-		Log.d(TAG, "*** Start doSend");
-		Log.d(TAG, "************************************************");
+		this.log("************************************************");
+		this.log("*** Start doSend");
+		this.log("************************************************");
 		this.doBootstrap(context, intent);
 
 		final SharedPreferences p = PreferenceManager
@@ -253,8 +269,8 @@ public class ConnectorSunrise extends Connector {
 		StringBuilder recipients = new StringBuilder();
 		// SMS Text
 		String text = command.getText();
-		Log.d(TAG, "text.length()=" + text.length());
-		Log.d(TAG, "text=" + text);
+		this.log("text.length()=" + text.length());
+		this.log("text=" + text);
 		String charsLeft = "";
 		if (text != null) {
 			if (text.length() <= 160) {
@@ -268,18 +284,18 @@ public class ConnectorSunrise extends Connector {
 			}
 			if (text.length() > 480) {
 				text = text.substring(0, 480);
-				Log.d(TAG, "text gekürzt. length=" + text.length());
+				this.log("text gekürzt. length=" + text.length());
 				charsLeft = "" + (480 - text.length()) + " / 3";
 			}
 		}
-		Log.d(TAG, "charsLeft=" + charsLeft);
+		this.log("charsLeft=" + charsLeft);
 
 		// SMS Recipients
 		String[] to = command.getRecipients();
 		if (to == null || to.length > 10) {
 			String error = context
 					.getString(R.string.connector_sunrise_max_10_recipients);
-			Log.d(TAG, "----- throwing WebSMSException: " + error);
+			this.log("----- throwing WebSMSException: " + error);
 			throw new WebSMSException(error);
 		}
 		for (int i = 0; i < to.length; i++) {
@@ -290,9 +306,9 @@ public class ConnectorSunrise extends Connector {
 				recipients.append(to[i].trim());
 			}
 		}
-		Log.d(TAG, "to.length=" + to.length);
-		Log.d(TAG, "to[0]    =" + to[0]);
-		Log.d(TAG, "all recipients=" + recipients);
+		this.log("to.length=" + to.length);
+		this.log("to[0]    =" + to[0]);
+		this.log("all recipients=" + recipients);
 
 		// if defined sender for multiple numbers is present
 		if (!this.isLoginWithEmail(p) && this.isDefinedSenderEntered(p)) {
@@ -312,7 +328,7 @@ public class ConnectorSunrise extends Connector {
 					definedSender));
 			this.sendData(URL_CHOOSE_NUMBER, context, postParameter, true);
 
-			Log.d(TAG, "******* definedSender =" + definedSender);
+			this.log("******* definedSender =" + definedSender);
 			checkForSenderErrors = true;
 			this.PHONE_NUMBER = definedSender;
 
@@ -321,7 +337,7 @@ public class ConnectorSunrise extends Connector {
 		if (this.PHONE_NUMBER.equals(DUMMY)) {
 			this.doUpdate(context, intent);
 		}
-		Log.d(TAG, "******* post PhoneNumber nachher=" + this.PHONE_NUMBER);
+		this.log("******* post PhoneNumber nachher=" + this.PHONE_NUMBER);
 
 		// Building POST parameter
 		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
@@ -335,7 +351,7 @@ public class ConnectorSunrise extends Connector {
 		postParameter.add(new BasicNameValuePair("currentMsisdn",
 				this.PHONE_NUMBER));
 
-		Log.d(TAG, "****** = PHONE_NUMBER = " + this.PHONE_NUMBER);
+		this.log("****** = PHONE_NUMBER = " + this.PHONE_NUMBER);
 
 		if (this.isLoginWithEmail(p)) {
 			this.sendData(URL_EMAIL_SENDSMS, context, postParameter, true);
@@ -343,9 +359,9 @@ public class ConnectorSunrise extends Connector {
 			this.sendData(URL_TEL_SENDSMS, context, postParameter, true);
 		}
 
-		Log.d(TAG, "************************************************");
-		Log.d(TAG, "*** Ende doSend");
-		Log.d(TAG, "************************************************");
+		this.log("************************************************");
+		this.log("*** Ende doSend");
+		this.log("************************************************");
 	}
 
 	/**
@@ -360,35 +376,35 @@ public class ConnectorSunrise extends Connector {
 			final ArrayList<BasicNameValuePair> postParameter,
 			final boolean parseHtml) throws WebSMSException {
 
-		Log.d(TAG, "************************************************");
-		Log.d(TAG, "*** Start sendData");
-		Log.d(TAG, "************************************************");
+		this.log("************************************************");
+		this.log("*** Start sendData");
+		this.log("************************************************");
 		try {
 
-			Log.d(TAG, "URL: " + fullTargetURL);
+			this.log("URL: " + fullTargetURL);
 			// send data
-			Log.d(TAG, "prepare: getHttpClient(...)");
+			this.log("prepare: getHttpClient(...)");
 
 			HttpOptions httpOptions = new HttpOptions();
 			httpOptions.url = fullTargetURL;
 			httpOptions.userAgent = USER_AGENT;
 			// httpOptions.encoding = ENCODING;
 			httpOptions.trustAll = true;
-			Log.d(TAG, "UrlEncodedFormEntity()");
+			this.log("UrlEncodedFormEntity()");
 			if (postParameter != null) {
 				httpOptions.postData = new UrlEncodedFormEntity(postParameter,
 						ENCODING);
 			}
 
-			Log.d(TAG, "send data: getHttpClient(...)");
+			this.log("send data: getHttpClient(...)");
 			HttpResponse response = Utils.getHttpClient(httpOptions);
 
 			// HttpResponse response = Utils.getHttpClient(fullTargetURL, null,
 			// postParameter, USER_AGENT, fullTargetURL, ENCODING, true);
 
 			int respStatus = response.getStatusLine().getStatusCode();
-			Log.d(TAG, "response status=" + respStatus);
-			Log.d(TAG, "response=\n" + response);
+			this.log("response status=" + respStatus);
+			this.log("response=\n" + response);
 			if (respStatus != HttpURLConnection.HTTP_OK) {
 				throw new WebSMSException(context, R.string.error_http, ""
 						+ respStatus);
@@ -398,9 +414,9 @@ public class ConnectorSunrise extends Connector {
 			if (htmlText == null || htmlText.length() == 0) {
 				throw new WebSMSException(context, R.string.error_service);
 			}
-			// Log.d(TAG, "----- Start HTTP RESPONSE--");
-			// Log.d(TAG, htmlText);
-			// Log.d(TAG, "----- End HTTP RESPONSE--");
+			this.log("----- Start HTTP RESPONSE--");
+			this.log(htmlText);
+			this.log("----- End HTTP RESPONSE--");
 			if (parseHtml) {
 				this.getPhoneNumber(htmlText, context);
 				String guthabenGratis = this.getGuthabenGratis(htmlText,
@@ -426,8 +442,7 @@ public class ConnectorSunrise extends Connector {
 					this.SMS_CREDIT = guthabenGratis + guthabenBezahlt;
 				}
 				if (errorMessage != null && !errorMessage.equals("")) {
-					Log.d(TAG, "----- throwing WebSMSException: "
-							+ errorMessage);
+					this.log("----- throwing WebSMSException: " + errorMessage);
 					throw new WebSMSException(errorMessage);
 				}
 
@@ -440,9 +455,9 @@ public class ConnectorSunrise extends Connector {
 			Log.e(TAG, null, e);
 			throw new WebSMSException(e.getMessage());
 		}
-		Log.d(TAG, "************************************************");
-		Log.d(TAG, "*** Ende sendData");
-		Log.d(TAG, "************************************************");
+		this.log("************************************************");
+		this.log("*** Ende sendData");
+		this.log("************************************************");
 
 	}
 
@@ -454,7 +469,7 @@ public class ConnectorSunrise extends Connector {
 			guthabenGratis = htmlText.substring(indexStartSMSCredit + 7,
 					indexStartSMSCredit + 9);
 		}
-		Log.d(TAG, "indexOf Gratis=" + indexStartSMSCredit + " -- Gratis="
+		this.log("indexOf Gratis=" + indexStartSMSCredit + " -- Gratis="
 				+ guthabenGratis);
 
 		return guthabenGratis;
@@ -468,7 +483,7 @@ public class ConnectorSunrise extends Connector {
 			guthabenBezahlt = htmlText.substring(indexStartSMSCredit + 8,
 					indexStartSMSCredit + 10);
 		}
-		Log.d(TAG, "indexOf Bezahlt =" + indexStartSMSCredit + " -- Bezahlt="
+		this.log("indexOf Bezahlt =" + indexStartSMSCredit + " -- Bezahlt="
 				+ guthabenBezahlt);
 
 		return guthabenBezahlt;
@@ -481,9 +496,9 @@ public class ConnectorSunrise extends Connector {
 				this.PHONE_NUMBER = htmlText.substring(
 						indexStartPhoneNumber + 22, indexStartPhoneNumber + 32);
 			}
-			Log.d(TAG, "******* indexOf PhoneNumber =" + indexStartPhoneNumber);
+			this.log("******* indexOf PhoneNumber =" + indexStartPhoneNumber);
 		}
-		Log.d(TAG, "******* PhoneNumber=" + this.PHONE_NUMBER);
+		this.log("******* PhoneNumber=" + this.PHONE_NUMBER);
 
 	}
 
@@ -499,7 +514,7 @@ public class ConnectorSunrise extends Connector {
 				message = htmlText.substring(indexStartErrorBlock + 28,
 						indexEndeErrorBlock);
 			}
-			Log.d(TAG, "indexStartOf errorBlock =" + indexStartErrorBlock
+			this.log("indexStartOf errorBlock =" + indexStartErrorBlock
 					+ ", indexEndeOf errorBlock =" + indexEndeErrorBlock
 					+ " -- Message=" + message);
 
@@ -514,4 +529,12 @@ public class ConnectorSunrise extends Connector {
 		return message.trim();
 	}
 
+	/**
+	 * central logger
+	 * 
+	 * @param message
+	 */
+	private void log(final String message) {
+		// Log.d(TAG, message);
+	}
 }
