@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 
 import android.content.Context;
 import android.content.Intent;
@@ -53,7 +54,7 @@ public class ConnectorSunrise extends Connector {
 	/** Login URL with E-mail. */
 	private static String URL_EMAIL_LOGIN_ACTION_PART = DUMMY;
 	/** Login URL with E-mail. */
-	private static String URL_EMAIL_LOGIN_ACTION_REFIX = "https://mip.sunrise.ch/mip/dyn/login/login";
+	private static String URL_EMAIL_LOGIN_ACTION_PREFIX = "https://mip.sunrise.ch/mip/dyn/login/login";
 
 	/** SMS URL with E-Mail. */
 	private static final String URL_EMAIL_SENDSMS = "https://mip.sunrise.ch/mip/dyn/sms/sms?up_contactsPerPage=14&amp;lang=de&amp;country=us&amp;.lang=de&amp;.country=us&amp;synd=ig&amp;mid=36&amp;ifpctok=4219904978209905668&amp;exp_track_js=1&amp;exp_ids=17259&amp;parent=http://partnerpage.google.com&amp;libs=7ndonz73vUA/lib/liberror_tracker.js,RNMmLHDUuvI/lib/libcore.js,OqjxSeEKc8o/lib/libdynamic-height.js&amp;view=home";
@@ -181,10 +182,6 @@ public class ConnectorSunrise extends Connector {
 		this.log("Enter in new bootstrap");
 		this.log("LOGIN_TOKEN=" + ConnectorSunrise.URL_EMAIL_LOGIN_ACTION_PART);
 
-		if (ConnectorSunrise.URL_EMAIL_LOGIN_ACTION_PART.equals(DUMMY)) {
-			// Get LOGIN_TOKEN (SunQueryParamsString)
-			this.sendData(URL_EMAIL_STARTUP, context, null);
-		}
 		this.log("**** got the URL_LOGIN_STARTUP="
 				+ URL_EMAIL_LOGIN_ACTION_PART);
 
@@ -196,10 +193,16 @@ public class ConnectorSunrise extends Connector {
 		// Login-Username kann E-Mail oder Telefonnummer sein.
 		if (this.isLoginWithEmail(p)) {
 			this.log("**** Login mit E-Mail");
+
+			if (ConnectorSunrise.URL_EMAIL_LOGIN_ACTION_PART.equals(DUMMY)) {
+				// Get LOGIN_TOKEN (SunQueryParamsString)
+				this.sendData(URL_EMAIL_STARTUP, context, null);
+			}
+
 			postParameter.add(new BasicNameValuePair("username", username));
 			postParameter.add(new BasicNameValuePair("password", password));
 			postParameter.add(new BasicNameValuePair("_remember", "on"));
-			this.sendData(URL_EMAIL_LOGIN_ACTION_REFIX
+			this.sendData(URL_EMAIL_LOGIN_ACTION_PREFIX
 					+ URL_EMAIL_LOGIN_ACTION_PART, context, postParameter);
 		} else {
 			this.log("**** Login mit Telefonnummer");
@@ -406,7 +409,7 @@ public class ConnectorSunrise extends Connector {
 			httpOptions.userAgent = USER_AGENT;
 			// httpOptions.encoding = ENCODING;
 			httpOptions.trustAll = true;
-			this.log("UrlEncodedFormEntity()");
+			this.log("UrlEncodedFormEntity(); POST=" + postParameter);
 			if (postParameter != null) {
 				httpOptions.postData = new UrlEncodedFormEntity(postParameter,
 						ENCODING);
@@ -425,19 +428,27 @@ public class ConnectorSunrise extends Connector {
 				throw new WebSMSException(context, R.string.error_http, ""
 						+ respStatus);
 			}
-			String htmlText = Utils.stream2str(
-					response.getEntity().getContent()).trim();
+			this.log("----- Start EntityUtils --");
+			String htmlText = EntityUtils.toString(response.getEntity()).trim();
+			this.log("htmlText size=" + htmlText.length());
+			this.log("htmlText=" + htmlText);
+			this.log("----- End EntityUtils--");
+			// String htmlText = Utils.stream2str(
+			// response.getEntity().getContent()).trim();
 			if (htmlText == null || htmlText.length() == 0) {
 				throw new WebSMSException(context, R.string.error_service);
 			}
-			this.log("----- Start HTTP RESPONSE--");
-			this.log(htmlText);
-			this.log("----- End HTTP RESPONSE--");
+			// this.log("----- Start HTTP RESPONSE--");
+			// this.log("html size=" + htmlText.length());
+			// this.log(htmlText);
+			// this.log("----- End HTTP RESPONSE--");
+
 			// Get Login action
 			if (fullTargetURL.equals(URL_EMAIL_STARTUP)) {
 				URL_EMAIL_LOGIN_ACTION_PART = HtmlUtil.getHtmlString(htmlText,
 						"action=\"/mip/dyn/login/login", 28, 2000, "\">", 0);
 			} else {
+
 				this.getPhoneNumber(htmlText, context);
 				String errorMessage = this.getErrorBlockMessage(htmlText,
 						context);
@@ -445,9 +456,9 @@ public class ConnectorSunrise extends Connector {
 					this.log("----- throwing WebSMSException: " + errorMessage);
 					throw new WebSMSException(errorMessage);
 				}
-
 				if (fullTargetURL.equals(URL_EMAIL_SENDSMS)
-						|| fullTargetURL.equals(URL_TEL_SENDSMS)) {
+						|| fullTargetURL.equals(URL_TEL_SENDSMS)
+						|| fullTargetURL.equals(URL_TEL_SMS_SENDER)) {
 					String guthabenGratis = this.getGuthabenGratis(htmlText,
 							context);
 					String guthabenBezahlt = this.getGuthabenBezahlt(htmlText,
@@ -487,10 +498,22 @@ public class ConnectorSunrise extends Connector {
 	private String getGuthabenGratis(final String htmlText,
 			final Context context) {
 		String guthabenGratis = "";
-		int indexStartSMSCredit = htmlText.indexOf("Gratis");
+		int indexStartSMSCredit = htmlText.indexOf("Free ");
 		if (indexStartSMSCredit > 0) {
-			guthabenGratis = htmlText.substring(indexStartSMSCredit + 7,
-					indexStartSMSCredit + 9);
+			guthabenGratis = htmlText.substring(indexStartSMSCredit + 5,
+					indexStartSMSCredit + 7);
+		} else {
+			indexStartSMSCredit = htmlText.indexOf("Gratis ");
+			if (indexStartSMSCredit > 0) {
+				guthabenGratis = htmlText.substring(indexStartSMSCredit + 7,
+						indexStartSMSCredit + 9);
+			} else {
+				indexStartSMSCredit = htmlText.indexOf("Gratuits ");
+				if (indexStartSMSCredit > 0) {
+					guthabenGratis = htmlText.substring(
+							indexStartSMSCredit + 9, indexStartSMSCredit + 11);
+				}
+			}
 		}
 		this.log("indexOf Gratis=" + indexStartSMSCredit + " -- Gratis="
 				+ guthabenGratis);
@@ -501,10 +524,22 @@ public class ConnectorSunrise extends Connector {
 	private String getGuthabenBezahlt(final String htmlText,
 			final Context context) {
 		String guthabenBezahlt = "";
-		int indexStartSMSCredit = htmlText.indexOf("Bezahlt ");
+		int indexStartSMSCredit = htmlText.indexOf("Paid ");
 		if (indexStartSMSCredit > 0) {
-			guthabenBezahlt = htmlText.substring(indexStartSMSCredit + 8,
-					indexStartSMSCredit + 10);
+			guthabenBezahlt = htmlText.substring(indexStartSMSCredit + 5,
+					indexStartSMSCredit + 7);
+		} else {
+			indexStartSMSCredit = htmlText.indexOf("Bezahlt ");
+			if (indexStartSMSCredit > 0) {
+				guthabenBezahlt = htmlText.substring(indexStartSMSCredit + 8,
+						indexStartSMSCredit + 10);
+			} else {
+				indexStartSMSCredit = htmlText.indexOf("Payé(s) ");
+				if (indexStartSMSCredit > 0) {
+					guthabenBezahlt = htmlText.substring(
+							indexStartSMSCredit + 8, indexStartSMSCredit + 10);
+				}
+			}
 		}
 		this.log("indexOf Bezahlt =" + indexStartSMSCredit + " -- Bezahlt="
 				+ guthabenBezahlt);
@@ -558,6 +593,6 @@ public class ConnectorSunrise extends Connector {
 	 * @param message
 	 */
 	private void log(final String message) {
-		Log.d(TAG, message);
+		// Log.d(TAG, message);
 	}
 }
