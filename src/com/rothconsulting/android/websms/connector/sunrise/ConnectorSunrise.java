@@ -121,6 +121,7 @@ public class ConnectorSunrise extends Connector {
 		c.setCapabilities(ConnectorSpec.CAPABILITIES_BOOTSTRAP | ConnectorSpec.CAPABILITIES_UPDATE
 				| ConnectorSpec.CAPABILITIES_SEND | ConnectorSpec.CAPABILITIES_PREFS);
 		c.addSubConnector("sunrise", c.getName(), SubConnectorSpec.FEATURE_MULTIRECIPIENTS);
+
 		return c;
 	}
 
@@ -223,9 +224,28 @@ public class ConnectorSunrise extends Connector {
 
 		final SharedPreferences p = PreferenceManager.getDefaultSharedPreferences(context);
 
+		// Get singleton.
+		this.mGaInstance = GoogleAnalytics.getInstance(context);
+		// To set the default tracker, use:
+		// First get a tracker using a new property ID.
+		Tracker newTracker = this.mGaInstance.getTracker(ANALYTICS_ID);
+		// Then make newTracker the default tracker globally.
+		this.mGaInstance.setDefaultTracker(newTracker);
+		// Get default tracker.
+		this.mGaTracker = this.mGaInstance.getDefaultTracker();
+
 		if (this.isLoginWithEmail(p)) {
+			// Google analytics
+			if (this.mGaTracker != null) {
+				this.log("Tracking ID=" + this.mGaTracker.getTrackingId());
+				this.mGaTracker.sendEvent(TAG, "doUpdate", "Login with Email", 0L);
+			}
 			this.sendData(URL_EMAIL_SENDSMS, context, null);
 		} else {
+			// Google analytics
+			if (this.mGaTracker != null) {
+				this.mGaTracker.sendEvent(TAG, "doUpdate", "Login with Phonenumber", 0L);
+			}
 			// if default sender for multiple numbers is present
 			if (this.isDefinedSenderEntered(p)) {
 				String defaultSender = p.getString(Preferences.PREFS_DEFINED_SENDER_NUMBER, "");
@@ -255,12 +275,6 @@ public class ConnectorSunrise extends Connector {
 		this.log("*** Start doSend");
 		this.log("************************************************");
 		this.doBootstrap(context, intent);
-
-		// Get the GoogleAnalytics singleton. Note that the SDK uses
-		// the application context to avoid leaking the current context.
-		this.mGaInstance = GoogleAnalytics.getInstance(context);
-		// Use the GoogleAnalytics singleton to get a Tracker.
-		this.mGaTracker = this.mGaInstance.getTracker(ANALYTICS_ID);
 
 		final SharedPreferences p = PreferenceManager.getDefaultSharedPreferences(context);
 
@@ -350,13 +364,13 @@ public class ConnectorSunrise extends Connector {
 		if (this.isLoginWithEmail(p)) {
 			// Google analytics
 			if (this.mGaTracker != null) {
-				this.mGaTracker.sendEvent("Connector Sunrise", "Send SMS", "Login with Email", 0L);
+				this.mGaTracker.sendEvent(TAG, "Send SMS", "Login with Email", 0L);
 			}
 			this.sendData(URL_EMAIL_SENDSMS, context, postParameter);
 		} else {
 			// Google analytics
 			if (this.mGaTracker != null) {
-				this.mGaTracker.sendEvent("Connector Sunrise", "Send SMS", "Login with Phonenumber", 0L);
+				this.mGaTracker.sendEvent(TAG, "Send SMS", "Login with Phonenumber", 0L);
 			}
 			this.sendData(URL_TEL_SENDSMS, context, postParameter);
 		}
@@ -547,6 +561,6 @@ public class ConnectorSunrise extends Connector {
 	 * @param message
 	 */
 	private void log(final String message) {
-		// Log.d(TAG, message);
+		Log.d(TAG, message);
 	}
 }
