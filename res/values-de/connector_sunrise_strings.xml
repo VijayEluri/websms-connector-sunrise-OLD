@@ -27,7 +27,9 @@
 	<string name="connector_sunrise_defined_sender_number_hint">Nur verwenden falls du in deinem Konto mehrere Sunrise Nummern hast. Definiere hier die gewünschte Absender Nummer.</string>
 	<string name="connector_sunrise_personal_code_lost">Personal Code anfragen</string>
 	<string name="connector_sunrise_personal_code_lost_hint">Personal Code zur Telefonnummer vergessen? Hier anfragen…</string>
-	<string name="connector_sunrise_register_account_hint">Brauchst du ein Sunrise Email Konto? Registriere Dich hier…</string>
+	<string name="connector_sunrise_register_account_hint">Brauchst du ein Sunrise E-Mail Konto? Registriere Dich hier…</string>
+	<string name="connector_sunrise_mail_pw_lost">E-Mail Passwort anfragen</string>
+	<string name="connector_sunrise_mail_pw_lost_hint">E-Mail Passwort vergessen? Hier anfragen…</string>
 	<string name="connector_sunrise_gratis">Gratis</string>
 	<string name="connector_sunrise_bezahlt">Bezahlt</string>
 	<string name="connector_sunrise_wrong_mobilenumber">In den Einstellungen korrekte Mobilnummer oder keine Mobilnummer eingeben.</string>

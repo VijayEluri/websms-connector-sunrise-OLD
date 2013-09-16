@@ -31,6 +31,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import com.google.analytics.tracking.android.GoogleAnalytics;
+import com.google.analytics.tracking.android.Tracker;
+
 import de.ub0r.android.websms.connector.common.Connector;
 import de.ub0r.android.websms.connector.common.ConnectorCommand;
 import de.ub0r.android.websms.connector.common.ConnectorSpec;
@@ -49,15 +53,10 @@ public class ConnectorSunrise extends Connector {
 	private static final String TAG = "Sunrise";
 	/** Dummy String */
 	private static final String DUMMY = "???";
-	/** URL to get E-mail login action. */
-	private static final String URL_EMAIL_STARTUP = "https://www.google.com/a/sunrise.ch/ServiceLogin?continue=http://partnerpage.google.com/sunrise.ch/default/postlogin%3Fpid%3Dsunrise.ch%26url%3Dhttp://partnerpage.google.com/sunrise.ch&followup=http://partnerpage.google.com/sunrise.ch/default/postlogin%3Fpid%3Dsunrise.ch%26url%3Dhttp://partnerpage.google.com/sunrise.ch&service=ig&passive=true&cd=US&hl=de&nui=1&ltmpl=default&go=true";
 	/** Login URL with E-mail. */
-	private static String URL_EMAIL_LOGIN_ACTION_PART = DUMMY;
-	/** Login URL with E-mail. */
-	private static String URL_EMAIL_LOGIN_ACTION_PREFIX = "https://mip.sunrise.ch/mip/dyn/login/login";
-
+	private static String URL_EMAIL_LOGIN_ACTION = "http://mail.sunrise.ch/mip/dyn/login/login";
 	/** SMS URL with E-Mail. */
-	private static final String URL_EMAIL_SENDSMS = "https://mip.sunrise.ch/mip/dyn/sms/sms?up_contactsPerPage=14&amp;lang=de&amp;country=us&amp;.lang=de&amp;.country=us&amp;synd=ig&amp;mid=36&amp;ifpctok=4219904978209905668&amp;exp_track_js=1&amp;exp_ids=17259&amp;parent=http://partnerpage.google.com&amp;libs=7ndonz73vUA/lib/liberror_tracker.js,RNMmLHDUuvI/lib/libcore.js,OqjxSeEKc8o/lib/libdynamic-height.js&amp;view=home";
+	private static final String URL_EMAIL_SENDSMS = "http://mail.sunrise.ch/mip/dyn/startpage/sms";
 	/** Login URL with Tel-Nr. */
 	private static final String URL_TEL_LOGIN = "https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewApplication-Login";
 	/** URL to get balance */
@@ -66,11 +65,10 @@ public class ConnectorSunrise extends Connector {
 	private static final String URL_TEL_SENDSMS = "http://mip.sunrise.ch/mip/dyn/login/smsMeinKonto?lang=de";
 	/** URL when multiple numbers present */
 	private static final String URL_CHOOSE_NUMBER = "https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewECareMessaging-Encrypt";
-
 	/** SMS Credit */
 	private String SMS_CREDIT = DUMMY;
 	/** HTTP User agent. */
-	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.56 Safari/537.17";
+	private static final String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.65 Safari/537.36";
 	/** SMS Encoding */
 	private static final String ENCODING = "UTF-8";
 	/** Check whether this connector is bootstrapping. */
@@ -81,6 +79,11 @@ public class ConnectorSunrise extends Connector {
 	private static boolean checkForSenderErrors = false;
 	/** My Ad-ID */
 	private static final String AD_UNITID = "a14ed1536d6c700";
+	/** My Analytics-ID */
+	private static final String ANALYTICS_ID = "UA-38114228-3";
+
+	private Tracker mGaTracker;
+	private GoogleAnalytics mGaInstance;
 
 	private boolean isLoginWithEmail(final SharedPreferences p) {
 		if (p != null) {
@@ -94,16 +97,13 @@ public class ConnectorSunrise extends Connector {
 
 	private boolean isDefinedSenderEntered(final SharedPreferences p) {
 		if (p != null) {
-			String definedSender = p.getString(
-					Preferences.PREFS_DEFINED_SENDER_NUMBER, "");
+			String definedSender = p.getString(Preferences.PREFS_DEFINED_SENDER_NUMBER, "");
 			if (definedSender != null && definedSender.length() > 9) {
-				this.log("*********** isDefinedSenderEntered = true definedSender="
-						+ definedSender);
+				this.log("*********** isDefinedSenderEntered = true, definedSender=" + definedSender);
 				return true;
 			}
 		}
 		this.log("*********** isDefinedSenderEntered = false");
-
 		return false;
 	}
 
@@ -118,12 +118,9 @@ public class ConnectorSunrise extends Connector {
 		c.setBalance(null);
 		c.setLimitLength(480);
 		c.setAdUnitId(AD_UNITID);
-		c.setCapabilities(ConnectorSpec.CAPABILITIES_BOOTSTRAP
-				| ConnectorSpec.CAPABILITIES_UPDATE
-				| ConnectorSpec.CAPABILITIES_SEND
-				| ConnectorSpec.CAPABILITIES_PREFS);
-		c.addSubConnector("sunrise", c.getName(),
-				SubConnectorSpec.FEATURE_MULTIRECIPIENTS);
+		c.setCapabilities(ConnectorSpec.CAPABILITIES_BOOTSTRAP | ConnectorSpec.CAPABILITIES_UPDATE
+				| ConnectorSpec.CAPABILITIES_SEND | ConnectorSpec.CAPABILITIES_PREFS);
+		c.addSubConnector("sunrise", c.getName(), SubConnectorSpec.FEATURE_MULTIRECIPIENTS);
 		return c;
 	}
 
@@ -131,17 +128,14 @@ public class ConnectorSunrise extends Connector {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public final ConnectorSpec updateSpec(final Context context,
-			final ConnectorSpec connectorSpec) {
+	public final ConnectorSpec updateSpec(final Context context, final ConnectorSpec connectorSpec) {
 		this.log("************************************************");
 		this.log("*** Start updateSpec");
 		this.log("************************************************");
-		final SharedPreferences p = PreferenceManager
-				.getDefaultSharedPreferences(context);
+		final SharedPreferences p = PreferenceManager.getDefaultSharedPreferences(context);
 		if (p.getBoolean(Preferences.PREFS_ENABLED, false)) {
-			if (p.getString(Preferences.PREFS_USER, "").length() > 0
-					&& p.getString(Preferences.PREFS_PASSWORD, "") // .
-							.length() > 0) {
+			if (p.getString(Preferences.PREFS_USER, "").length() > 0 && p.getString(Preferences.PREFS_PASSWORD, "") // .
+					.length() > 0) {
 				connectorSpec.setReady();
 			} else {
 				connectorSpec.setStatus(ConnectorSpec.STATUS_ENABLED);
@@ -159,18 +153,15 @@ public class ConnectorSunrise extends Connector {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected final void doBootstrap(final Context context, final Intent intent)
-			throws WebSMSException {
+	protected final void doBootstrap(final Context context, final Intent intent) throws WebSMSException {
 		this.log("************************************************");
 		this.log("*** Start doBootstrap");
 		this.log("************************************************");
 		checkForSenderErrors = false;
 
-		final SharedPreferences p = PreferenceManager
-				.getDefaultSharedPreferences(context);
+		final SharedPreferences p = PreferenceManager.getDefaultSharedPreferences(context);
 
-		if (inBootstrap && !this.SMS_CREDIT.equals(DUMMY)
-				&& !this.PHONE_NUMBER.equals(DUMMY)) {
+		if (inBootstrap && !this.SMS_CREDIT.equals(DUMMY) && !this.PHONE_NUMBER.equals(DUMMY)) {
 			this.log("already in bootstrap: skip bootstrap");
 			return;
 		}
@@ -180,10 +171,6 @@ public class ConnectorSunrise extends Connector {
 		inBootstrap = true;
 
 		this.log("Enter in new bootstrap");
-		this.log("LOGIN_TOKEN=" + ConnectorSunrise.URL_EMAIL_LOGIN_ACTION_PART);
-
-		this.log("**** got the URL_LOGIN_STARTUP="
-				+ URL_EMAIL_LOGIN_ACTION_PART);
 
 		String username = p.getString(Preferences.PREFS_USER, "");
 		String password = p.getString(Preferences.PREFS_PASSWORD, "");
@@ -194,24 +181,17 @@ public class ConnectorSunrise extends Connector {
 		if (this.isLoginWithEmail(p)) {
 			this.log("**** Login mit E-Mail");
 
-			if (ConnectorSunrise.URL_EMAIL_LOGIN_ACTION_PART.equals(DUMMY)) {
-				// Get LOGIN_TOKEN (SunQueryParamsString)
-				this.sendData(URL_EMAIL_STARTUP, context, null);
-			}
-
 			postParameter.add(new BasicNameValuePair("username", username));
 			postParameter.add(new BasicNameValuePair("password", password));
+			postParameter.add(new BasicNameValuePair("remember", "true"));
 			postParameter.add(new BasicNameValuePair("_remember", "on"));
-			this.sendData(URL_EMAIL_LOGIN_ACTION_PREFIX
-					+ URL_EMAIL_LOGIN_ACTION_PART, context, postParameter);
+			this.sendData(URL_EMAIL_LOGIN_ACTION, context, postParameter);
+
 		} else {
 			this.log("**** Login mit Telefonnummer");
-			postParameter.add(new BasicNameValuePair("LoginForm_Login",
-					username));
-			postParameter.add(new BasicNameValuePair("LoginForm_Password",
-					password));
-			postParameter.add(new BasicNameValuePair("LoginRedirectSecret",
-					"d285715d94fb4cd4613ad70aaeb8f735"));
+			postParameter.add(new BasicNameValuePair("LoginForm_Login", username));
+			postParameter.add(new BasicNameValuePair("LoginForm_Password", password));
+			postParameter.add(new BasicNameValuePair("LoginRedirectSecret", "d285715d94fb4cd4613ad70aaeb8f735"));
 			postParameter
 					.add(new BasicNameValuePair(
 							"LoginRedirectURL",
@@ -235,26 +215,22 @@ public class ConnectorSunrise extends Connector {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected final void doUpdate(final Context context, final Intent intent)
-			throws WebSMSException {
+	protected final void doUpdate(final Context context, final Intent intent) throws WebSMSException {
 		this.log("************************************************");
 		this.log("*** Start doUpdate");
 		this.log("************************************************");
 		this.doBootstrap(context, intent);
 
-		final SharedPreferences p = PreferenceManager
-				.getDefaultSharedPreferences(context);
+		final SharedPreferences p = PreferenceManager.getDefaultSharedPreferences(context);
 
 		if (this.isLoginWithEmail(p)) {
 			this.sendData(URL_EMAIL_SENDSMS, context, null);
 		} else {
 			// if default sender for multiple numbers is present
 			if (this.isDefinedSenderEntered(p)) {
-				String defaultSender = p.getString(
-						Preferences.PREFS_DEFINED_SENDER_NUMBER, "");
+				String defaultSender = p.getString(Preferences.PREFS_DEFINED_SENDER_NUMBER, "");
 				ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
-				postParameter.add(new BasicNameValuePair("PhoneNumber",
-						defaultSender));
+				postParameter.add(new BasicNameValuePair("PhoneNumber", defaultSender));
 				this.sendData(URL_CHOOSE_NUMBER, context, postParameter);
 			}
 
@@ -274,15 +250,19 @@ public class ConnectorSunrise extends Connector {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected final void doSend(final Context context, final Intent intent)
-			throws WebSMSException {
+	protected final void doSend(final Context context, final Intent intent) throws WebSMSException {
 		this.log("************************************************");
 		this.log("*** Start doSend");
 		this.log("************************************************");
 		this.doBootstrap(context, intent);
 
-		final SharedPreferences p = PreferenceManager
-				.getDefaultSharedPreferences(context);
+		// Get the GoogleAnalytics singleton. Note that the SDK uses
+		// the application context to avoid leaking the current context.
+		this.mGaInstance = GoogleAnalytics.getInstance(context);
+		// Use the GoogleAnalytics singleton to get a Tracker.
+		this.mGaTracker = this.mGaInstance.getTracker(ANALYTICS_ID);
+
+		final SharedPreferences p = PreferenceManager.getDefaultSharedPreferences(context);
 
 		ConnectorCommand command = new ConnectorCommand(intent);
 		StringBuilder recipients = new StringBuilder();
@@ -312,8 +292,7 @@ public class ConnectorSunrise extends Connector {
 		// SMS Recipients
 		String[] to = command.getRecipients();
 		if (to == null || to.length > 10) {
-			String error = context
-					.getString(R.string.connector_sunrise_max_10_recipients);
+			String error = context.getString(R.string.connector_sunrise_max_10_recipients);
 			this.log("----- throwing WebSMSException: " + error);
 			throw new WebSMSException(error);
 		}
@@ -332,8 +311,7 @@ public class ConnectorSunrise extends Connector {
 		// if defined sender for multiple numbers is present
 		if (!this.isLoginWithEmail(p) && this.isDefinedSenderEntered(p)) {
 
-			String definedSender = p.getString(
-					Preferences.PREFS_DEFINED_SENDER_NUMBER, "");
+			String definedSender = p.getString(Preferences.PREFS_DEFINED_SENDER_NUMBER, "");
 
 			if (definedSender.trim().startsWith("+417")) {
 				definedSender = definedSender.replace("+417", "07");
@@ -343,8 +321,7 @@ public class ConnectorSunrise extends Connector {
 			}
 
 			ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
-			postParameter.add(new BasicNameValuePair("PhoneNumber",
-					definedSender));
+			postParameter.add(new BasicNameValuePair("PhoneNumber", definedSender));
 			this.sendData(URL_CHOOSE_NUMBER, context, postParameter);
 
 			this.log("******* definedSender =" + definedSender);
@@ -360,21 +337,27 @@ public class ConnectorSunrise extends Connector {
 
 		// Building POST parameter
 		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
-		postParameter.add(new BasicNameValuePair("recipient", recipients
-				.toString()));
+		postParameter.add(new BasicNameValuePair("recipient", recipients.toString()));
 		postParameter.add(new BasicNameValuePair("charsLeft", charsLeft));
 		postParameter.add(new BasicNameValuePair("type", "sms"));
 		postParameter.add(new BasicNameValuePair("message", text));
 		postParameter.add(new BasicNameValuePair("send", "send"));
 		postParameter.add(new BasicNameValuePair("task", "send"));
-		postParameter.add(new BasicNameValuePair("currentMsisdn",
-				this.PHONE_NUMBER));
+		postParameter.add(new BasicNameValuePair("currentMsisdn", this.PHONE_NUMBER));
 
 		this.log("****** = PHONE_NUMBER = " + this.PHONE_NUMBER);
 
 		if (this.isLoginWithEmail(p)) {
+			// Google analytics
+			if (this.mGaTracker != null) {
+				this.mGaTracker.sendEvent("Connector Sunrise", "Send SMS", "Login with Email", 0L);
+			}
 			this.sendData(URL_EMAIL_SENDSMS, context, postParameter);
 		} else {
+			// Google analytics
+			if (this.mGaTracker != null) {
+				this.mGaTracker.sendEvent("Connector Sunrise", "Send SMS", "Login with Phonenumber", 0L);
+			}
 			this.sendData(URL_TEL_SENDSMS, context, postParameter);
 		}
 
@@ -392,8 +375,7 @@ public class ConnectorSunrise extends Connector {
 	 * @throws WebSMSException
 	 */
 	private void sendData(final String fullTargetURL, final Context context,
-			final ArrayList<BasicNameValuePair> postParameter)
-			throws WebSMSException {
+			final ArrayList<BasicNameValuePair> postParameter) throws WebSMSException {
 
 		this.log("************************************************");
 		this.log("*** Start sendData");
@@ -411,8 +393,7 @@ public class ConnectorSunrise extends Connector {
 			httpOptions.trustAll = true;
 			this.log("UrlEncodedFormEntity(); POST=" + postParameter);
 			if (postParameter != null) {
-				httpOptions.postData = new UrlEncodedFormEntity(postParameter,
-						ENCODING);
+				httpOptions.postData = new UrlEncodedFormEntity(postParameter, ENCODING);
 			}
 
 			this.log("send data: getHttpClient(...)");
@@ -425,8 +406,7 @@ public class ConnectorSunrise extends Connector {
 			this.log("response status=" + respStatus);
 			this.log("response=\n" + response);
 			if (respStatus != HttpURLConnection.HTTP_OK) {
-				throw new WebSMSException(context, R.string.error_http, ""
-						+ respStatus);
+				throw new WebSMSException(context, R.string.error_http, "" + respStatus);
 			}
 			this.log("----- Start EntityUtils --");
 			String htmlText = EntityUtils.toString(response.getEntity()).trim();
@@ -443,45 +423,36 @@ public class ConnectorSunrise extends Connector {
 			// this.log(htmlText);
 			// this.log("----- End HTTP RESPONSE--");
 
-			// Get Login action
-			if (fullTargetURL.equals(URL_EMAIL_STARTUP)) {
-				URL_EMAIL_LOGIN_ACTION_PART = HtmlUtil.getHtmlString(htmlText,
-						"action=\"/mip/dyn/login/login", 28, 2000, "\">", 0);
-			} else {
+			// // Get Login action
+			// if (fullTargetURL.equals(URL_EMAIL_STARTUP)) {
+			// URL_EMAIL_LOGIN_ACTION_PART = HtmlUtil.getHtmlString(htmlText,
+			// "action=\"/mip/dyn/login/login", 28, 2000, "\">", 0);
+			// } else {
 
-				this.getPhoneNumber(htmlText, context);
-				String errorMessage = this.getErrorBlockMessage(htmlText,
-						context);
-				if (errorMessage != null && !errorMessage.equals("")) {
-					this.log("----- throwing WebSMSException: " + errorMessage);
-					throw new WebSMSException(errorMessage);
-				}
-				if (fullTargetURL.equals(URL_EMAIL_SENDSMS)
-						|| fullTargetURL.equals(URL_TEL_SENDSMS)
-						|| fullTargetURL.equals(URL_TEL_SMS_SENDER)) {
-					String guthabenGratis = this.getGuthabenGratis(htmlText,
-							context);
-					String guthabenBezahlt = this.getGuthabenBezahlt(htmlText,
-							context);
-
-					if (guthabenGratis != null && !guthabenGratis.equals("")) {
-						guthabenGratis = context
-								.getString(R.string.connector_sunrise_gratis)
-								+ "=" + guthabenGratis;
-						this.SMS_CREDIT = guthabenGratis;
-					}
-					if (guthabenBezahlt != null && !guthabenBezahlt.equals("")
-							&& !guthabenBezahlt.trim().equals("0")) {
-						guthabenBezahlt = ", "
-								+ context
-										.getString(R.string.connector_sunrise_bezahlt)
-								+ "=" + guthabenBezahlt;
-						this.SMS_CREDIT = guthabenGratis + guthabenBezahlt;
-					}
-				}
-
-				this.getSpec(context).setBalance(this.SMS_CREDIT);
+			this.getPhoneNumber(htmlText, context);
+			String errorMessage = this.getErrorBlockMessage(htmlText, context);
+			if (errorMessage != null && !errorMessage.equals("")) {
+				this.log("----- throwing WebSMSException: " + errorMessage);
+				throw new WebSMSException(errorMessage);
 			}
+			if (fullTargetURL.equals(URL_EMAIL_SENDSMS) || fullTargetURL.equals(URL_TEL_SENDSMS)
+					|| fullTargetURL.equals(URL_TEL_SMS_SENDER)) {
+				String guthabenGratis = this.getGuthabenGratis(htmlText, context);
+				String guthabenBezahlt = this.getGuthabenBezahlt(htmlText, context);
+
+				if (guthabenGratis != null && !guthabenGratis.equals("")) {
+					guthabenGratis = context.getString(R.string.connector_sunrise_gratis) + "=" + guthabenGratis;
+					this.SMS_CREDIT = guthabenGratis;
+				}
+				if (guthabenBezahlt != null && !guthabenBezahlt.equals("") && !guthabenBezahlt.trim().equals("0")) {
+					guthabenBezahlt = ", " + context.getString(R.string.connector_sunrise_bezahlt) + "="
+							+ guthabenBezahlt;
+					this.SMS_CREDIT = guthabenGratis + guthabenBezahlt;
+				}
+			}
+
+			this.getSpec(context).setBalance(this.SMS_CREDIT);
+			// }
 
 			htmlText = null;
 
@@ -495,54 +466,44 @@ public class ConnectorSunrise extends Connector {
 
 	}
 
-	private String getGuthabenGratis(final String htmlText,
-			final Context context) {
+	private String getGuthabenGratis(final String htmlText, final Context context) {
 		String guthabenGratis = "";
 		int indexStartSMSCredit = htmlText.indexOf("Free ");
 		if (indexStartSMSCredit > 0) {
-			guthabenGratis = htmlText.substring(indexStartSMSCredit + 5,
-					indexStartSMSCredit + 7);
+			guthabenGratis = htmlText.substring(indexStartSMSCredit + 5, indexStartSMSCredit + 7);
 		} else {
 			indexStartSMSCredit = htmlText.indexOf("Gratis ");
 			if (indexStartSMSCredit > 0) {
-				guthabenGratis = htmlText.substring(indexStartSMSCredit + 7,
-						indexStartSMSCredit + 9);
+				guthabenGratis = htmlText.substring(indexStartSMSCredit + 7, indexStartSMSCredit + 9);
 			} else {
 				indexStartSMSCredit = htmlText.indexOf("Gratuits ");
 				if (indexStartSMSCredit > 0) {
-					guthabenGratis = htmlText.substring(
-							indexStartSMSCredit + 9, indexStartSMSCredit + 11);
+					guthabenGratis = htmlText.substring(indexStartSMSCredit + 9, indexStartSMSCredit + 11);
 				}
 			}
 		}
-		this.log("indexOf Gratis=" + indexStartSMSCredit + " -- Gratis="
-				+ guthabenGratis);
+		this.log("indexOf Gratis=" + indexStartSMSCredit + " -- Gratis=" + guthabenGratis);
 
 		return guthabenGratis;
 	}
 
-	private String getGuthabenBezahlt(final String htmlText,
-			final Context context) {
+	private String getGuthabenBezahlt(final String htmlText, final Context context) {
 		String guthabenBezahlt = "";
 		int indexStartSMSCredit = htmlText.indexOf("Paid ");
 		if (indexStartSMSCredit > 0) {
-			guthabenBezahlt = htmlText.substring(indexStartSMSCredit + 5,
-					indexStartSMSCredit + 7);
+			guthabenBezahlt = htmlText.substring(indexStartSMSCredit + 5, indexStartSMSCredit + 7);
 		} else {
 			indexStartSMSCredit = htmlText.indexOf("Bezahlt ");
 			if (indexStartSMSCredit > 0) {
-				guthabenBezahlt = htmlText.substring(indexStartSMSCredit + 8,
-						indexStartSMSCredit + 10);
+				guthabenBezahlt = htmlText.substring(indexStartSMSCredit + 8, indexStartSMSCredit + 10);
 			} else {
 				indexStartSMSCredit = htmlText.indexOf("Payé(s) ");
 				if (indexStartSMSCredit > 0) {
-					guthabenBezahlt = htmlText.substring(
-							indexStartSMSCredit + 8, indexStartSMSCredit + 10);
+					guthabenBezahlt = htmlText.substring(indexStartSMSCredit + 8, indexStartSMSCredit + 10);
 				}
 			}
 		}
-		this.log("indexOf Bezahlt =" + indexStartSMSCredit + " -- Bezahlt="
-				+ guthabenBezahlt);
+		this.log("indexOf Bezahlt =" + indexStartSMSCredit + " -- Bezahlt=" + guthabenBezahlt);
 
 		return guthabenBezahlt;
 	}
@@ -551,8 +512,7 @@ public class ConnectorSunrise extends Connector {
 		if (this.PHONE_NUMBER.equals(DUMMY)) {
 			int indexStartPhoneNumber = htmlText.indexOf("currentMsisdn");
 			if (indexStartPhoneNumber > 0) {
-				this.PHONE_NUMBER = htmlText.substring(
-						indexStartPhoneNumber + 22, indexStartPhoneNumber + 32);
+				this.PHONE_NUMBER = htmlText.substring(indexStartPhoneNumber + 22, indexStartPhoneNumber + 32);
 			}
 			this.log("******* indexOf PhoneNumber =" + indexStartPhoneNumber);
 		}
@@ -560,26 +520,20 @@ public class ConnectorSunrise extends Connector {
 
 	}
 
-	private String getErrorBlockMessage(final String htmlText,
-			final Context context) {
+	private String getErrorBlockMessage(final String htmlText, final Context context) {
 		String message = "";
 		if (checkForSenderErrors) {
 			int indexStartErrorBlock = htmlText.indexOf("errorBlock");
-			int indexEndeErrorBlock = htmlText
-					.indexOf("Die SMS/MMS wurde nicht versandt");
+			int indexEndeErrorBlock = htmlText.indexOf("Die SMS/MMS wurde nicht versandt");
 
 			if (indexStartErrorBlock > 0 && indexEndeErrorBlock > 0) {
-				message = htmlText.substring(indexStartErrorBlock + 28,
-						indexEndeErrorBlock);
+				message = htmlText.substring(indexStartErrorBlock + 28, indexEndeErrorBlock);
 			}
-			this.log("indexStartOf errorBlock =" + indexStartErrorBlock
-					+ ", indexEndeOf errorBlock =" + indexEndeErrorBlock
-					+ " -- Message=" + message);
+			this.log("indexStartOf errorBlock =" + indexStartErrorBlock + ", indexEndeOf errorBlock ="
+					+ indexEndeErrorBlock + " -- Message=" + message);
 
-			if (message.trim().startsWith(
-					"Die Absendernummer hat sich geändert")) {
-				message = context
-						.getString(R.string.connector_sunrise_wrong_mobilenumber);
+			if (message.trim().startsWith("Die Absendernummer hat sich geändert")) {
+				message = context.getString(R.string.connector_sunrise_wrong_mobilenumber);
 			} else {
 				message = "";
 			}

@@ -42,4 +42,9 @@
 		<intent android:action="android.intent.action.VIEW"
 			android:data="@string/connector_sunrise_register_account_url" />
 	</PreferenceScreen>
+	<PreferenceScreen android:title="@string/connector_sunrise_mail_pw_lost"
+		android:summary="@string/connector_sunrise_mail_pw_lost_hint">
+		<intent android:action="android.intent.action.VIEW"
+			android:data="@string/connector_sunrise_mail_pw_lost_url" />
+	</PreferenceScreen>
 </PreferenceScreen>
