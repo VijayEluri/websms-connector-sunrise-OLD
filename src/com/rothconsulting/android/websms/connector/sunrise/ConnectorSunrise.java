@@ -561,6 +561,6 @@ public class ConnectorSunrise extends Connector {
 	 * @param message
 	 */
 	private void log(final String message) {
-		Log.d(TAG, message);
+		// Log.d(TAG, message);
 	}
 }
