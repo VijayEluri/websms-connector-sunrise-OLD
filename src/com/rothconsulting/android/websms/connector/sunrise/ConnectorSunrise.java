@@ -54,9 +54,9 @@ public class ConnectorSunrise extends Connector {
 	/** Dummy String */
 	private static final String DUMMY = "???";
 	/** Login URL with E-mail. */
-	private static String URL_EMAIL_LOGIN_ACTION = "http://mail.sunrise.ch/mip/dyn/login/login";
+	private static String URL_EMAIL_LOGIN_ACTION = "http://mip.sunrise.ch/mip/dyn/login/login";
 	/** SMS URL with E-Mail. */
-	private static final String URL_EMAIL_SENDSMS = "http://mail.sunrise.ch/mip/dyn/startpage/sms";
+	private static final String URL_EMAIL_SENDSMS = "http://mip.sunrise.ch/mip/dyn/startpage/sms";
 	/** Login URL with Tel-Nr. */
 	private static final String URL_TEL_LOGIN = "https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewApplication-Login";
 	/** URL to get balance */
@@ -184,7 +184,6 @@ public class ConnectorSunrise extends Connector {
 
 			postParameter.add(new BasicNameValuePair("username", username));
 			postParameter.add(new BasicNameValuePair("password", password));
-			postParameter.add(new BasicNameValuePair("remember", "true"));
 			postParameter.add(new BasicNameValuePair("_remember", "on"));
 			this.sendData(URL_EMAIL_LOGIN_ACTION, context, postParameter);
 

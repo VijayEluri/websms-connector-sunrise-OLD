@@ -17,9 +17,9 @@
 		not, see <http://www.gnu.org/licenses/>.
 	-->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.rothconsulting.android.websms.connector.sunrise" android:versionName="1.9" android:versionCode="19">
+	package="com.rothconsulting.android.websms.connector.sunrise" android:versionName="1.10" android:versionCode="110">
 
-    <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="17"/>
+    <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="19"/>
 	<supports-screens android:largeScreens="true"
 		android:normalScreens="true" android:smallScreens="true"
 		android:anyDensity="true" />
