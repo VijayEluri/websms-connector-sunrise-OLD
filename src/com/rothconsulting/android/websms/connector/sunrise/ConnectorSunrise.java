@@ -54,15 +54,15 @@ public class ConnectorSunrise extends Connector {
 	/** Dummy String */
 	private static final String DUMMY = "???";
 	/** Login URL with E-mail. */
-	private static String URL_EMAIL_LOGIN_ACTION = "http://mip.sunrise.ch/mip/dyn/login/login";
+	private static String URL_EMAIL_LOGIN_ACTION = "https://mip.sunrise.ch/mip/dyn/login/login?lang=de";
 	/** SMS URL with E-Mail. */
-	private static final String URL_EMAIL_SENDSMS = "http://mip.sunrise.ch/mip/dyn/startpage/sms";
+	private static final String URL_EMAIL_SENDSMS = "https://mip.sunrise.ch/mip/dyn/startpage/sms";
 	/** Login URL with Tel-Nr. */
 	private static final String URL_TEL_LOGIN = "https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewApplication-Login";
 	/** URL to get balance */
 	private static final String URL_TEL_SMS_SENDER = "https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewStandardCatalog-Browse?CatalogCategoryID=cK7AqFI.H90AAAEvTK41fuRr";
 	/** SMS URL with Tel-Nr. */
-	private static final String URL_TEL_SENDSMS = "http://mip.sunrise.ch/mip/dyn/login/smsMeinKonto?lang=de";
+	private static final String URL_TEL_SENDSMS = "https://mip.sunrise.ch/mip/dyn/login/smsMeinKonto?lang=de";
 	/** URL when multiple numbers present */
 	private static final String URL_CHOOSE_NUMBER = "https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewECareMessaging-Encrypt";
 	/** SMS Credit */
@@ -74,7 +74,7 @@ public class ConnectorSunrise extends Connector {
 	/** Check whether this connector is bootstrapping. */
 	private static boolean inBootstrap = false;
 	/** The phone number from parsing the http response */
-	private String PHONE_NUMBER = DUMMY;
+	// private String PHONE_NUMBER = DUMMY;
 	/** Only when mobile number is entered, check for sender errors. */
 	private static boolean checkForSenderErrors = false;
 	/** My Ad-ID */
@@ -162,7 +162,7 @@ public class ConnectorSunrise extends Connector {
 
 		final SharedPreferences p = PreferenceManager.getDefaultSharedPreferences(context);
 
-		if (inBootstrap && !this.SMS_CREDIT.equals(DUMMY) && !this.PHONE_NUMBER.equals(DUMMY)) {
+		if (inBootstrap && !this.SMS_CREDIT.equals(DUMMY)) {
 			this.log("already in bootstrap: skip bootstrap");
 			return;
 		}
@@ -191,21 +191,22 @@ public class ConnectorSunrise extends Connector {
 			this.log("**** Login mit Telefonnummer");
 			postParameter.add(new BasicNameValuePair("LoginForm_Login", username));
 			postParameter.add(new BasicNameValuePair("LoginForm_Password", password));
-			postParameter.add(new BasicNameValuePair("LoginRedirectSecret", "d285715d94fb4cd4613ad70aaeb8f735"));
+			postParameter.add(new BasicNameValuePair("LoginRedirectSecret", "89cff646d5a3f65ce8a8ea59a3d7cad3"));
 			postParameter
 					.add(new BasicNameValuePair(
 							"LoginRedirectURL",
-							"https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewStandardCatalog-Browse?CatalogCategoryID=zv7AqFI.Z.gAAAEkbGdQzDCf&LoginOrigin=Mein%20Konto&LoginDestination=Mein%20Konto"));
+							"http://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewStandardCatalog-Browse?CatalogCategoryID=zv7AqFI.Z.gAAAEkbGdQzDCf"));
 			postParameter
 					.add(new BasicNameValuePair(
 							"ajaxhref",
-							"http://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewPersonalCodeRetrieval-New?SpcRetrievalMode=ECare"));
-			postParameter.add(new BasicNameValuePair("ajaxhref", ""));
+							"https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewPersonalCodeRetrieval-New?SpcRetrievalMode=ECare"));
+
+			postParameter.add(new BasicNameValuePair("login", ""));
 
 			this.sendData(URL_TEL_LOGIN, context, postParameter);
 		}
 
-		this.log("**** at end of bootstrap phonenumber=" + this.PHONE_NUMBER);
+		// this.log("**** at end of bootstrap phonenumber=" + this.PHONE_NUMBER);
 		this.log("************************************************");
 		this.log("*** Ende doBootstrap");
 		this.log("************************************************");
@@ -257,7 +258,7 @@ public class ConnectorSunrise extends Connector {
 			this.sendData(URL_TEL_SENDSMS, context, null); // get credit
 		}
 
-		this.log("******* doUpdate PhoneNumber=" + this.PHONE_NUMBER);
+		// this.log("******* doUpdate PhoneNumber=" + this.PHONE_NUMBER);
 		this.getSpec(context).setBalance(this.SMS_CREDIT);
 
 		this.log("************************************************");
@@ -339,26 +340,26 @@ public class ConnectorSunrise extends Connector {
 
 			this.log("******* definedSender =" + definedSender);
 			checkForSenderErrors = true;
-			this.PHONE_NUMBER = definedSender;
+			// this.PHONE_NUMBER = definedSender;
 
 		}
 
-		if (this.PHONE_NUMBER.equals(DUMMY)) {
-			this.doUpdate(context, intent);
-		}
-		this.log("******* post PhoneNumber nachher=" + this.PHONE_NUMBER);
+		// if (this.PHONE_NUMBER.equals(DUMMY)) {
+		// this.doUpdate(context, intent);
+		// }
+		// this.log("******* post PhoneNumber nachher=" + this.PHONE_NUMBER);
 
 		// Building POST parameter
 		ArrayList<BasicNameValuePair> postParameter = new ArrayList<BasicNameValuePair>();
 		postParameter.add(new BasicNameValuePair("recipient", recipients.toString()));
 		postParameter.add(new BasicNameValuePair("charsLeft", charsLeft));
-		postParameter.add(new BasicNameValuePair("type", "sms"));
+		postParameter.add(new BasicNameValuePair("mode", "SMS"));
 		postParameter.add(new BasicNameValuePair("message", text));
 		postParameter.add(new BasicNameValuePair("send", "send"));
 		postParameter.add(new BasicNameValuePair("task", "send"));
-		postParameter.add(new BasicNameValuePair("currentMsisdn", this.PHONE_NUMBER));
+		// postParameter.add(new BasicNameValuePair("currentMsisdn", this.PHONE_NUMBER));
 
-		this.log("****** = PHONE_NUMBER = " + this.PHONE_NUMBER);
+		// this.log("****** = PHONE_NUMBER = " + this.PHONE_NUMBER);
 
 		if (this.isLoginWithEmail(p)) {
 			// Google analytics
@@ -442,7 +443,7 @@ public class ConnectorSunrise extends Connector {
 			// "action=\"/mip/dyn/login/login", 28, 2000, "\">", 0);
 			// } else {
 
-			this.getPhoneNumber(htmlText, context);
+			// this.getPhoneNumber(htmlText, context);
 			String errorMessage = this.getErrorBlockMessage(htmlText, context);
 			if (errorMessage != null && !errorMessage.equals("")) {
 				this.log("----- throwing WebSMSException: " + errorMessage);
@@ -521,17 +522,17 @@ public class ConnectorSunrise extends Connector {
 		return guthabenBezahlt;
 	}
 
-	private void getPhoneNumber(final String htmlText, final Context context) {
-		if (this.PHONE_NUMBER.equals(DUMMY)) {
-			int indexStartPhoneNumber = htmlText.indexOf("currentMsisdn");
-			if (indexStartPhoneNumber > 0) {
-				this.PHONE_NUMBER = htmlText.substring(indexStartPhoneNumber + 22, indexStartPhoneNumber + 32);
-			}
-			this.log("******* indexOf PhoneNumber =" + indexStartPhoneNumber);
-		}
-		this.log("******* PhoneNumber=" + this.PHONE_NUMBER);
-
-	}
+	// private void getPhoneNumber(final String htmlText, final Context context) {
+	// if (this.PHONE_NUMBER.equals(DUMMY)) {
+	// int indexStartPhoneNumber = htmlText.indexOf("width: 440px");
+	// if (indexStartPhoneNumber > 0) {
+	// this.PHONE_NUMBER = htmlText.substring(indexStartPhoneNumber + 15, indexStartPhoneNumber + 25);
+	// }
+	// this.log("******* indexOf PhoneNumber =" + indexStartPhoneNumber);
+	// }
+	// this.log("******* PhoneNumber=" + this.PHONE_NUMBER);
+	//
+	// }
 
 	private String getErrorBlockMessage(final String htmlText, final Context context) {
 		String message = "";
