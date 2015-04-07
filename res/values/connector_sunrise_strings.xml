@@ -30,13 +30,13 @@
 	<string name="connector_sunrise_defined_sender_number_hint">Use only if you have multiple numbers in your sunrise account. Enter here the preferred sender number.</string>
 	<string name="connector_sunrise_personal_code_lost">Personal code request</string>
 	<string name="connector_sunrise_personal_code_lost_hint">Lost your personal code? Request it here…</string>
-	<string name="connector_sunrise_personal_code_lost_url">http://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewPersonalCodeRetrieval-Mobile</string>
+	<string name="connector_sunrise_personal_code_lost_url">https://m.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewWebAppPersonalCodeRetrieval-ViewStep1?FrmPasswordRetrievalStep1_PhoneNr=</string>
 	<string name="connector_sunrise_register_account">Sunrise Mail Homepage</string>
 	<string name="connector_sunrise_register_account_hint">Want a sunrise mail account? Register here…</string>
 	<string name="connector_sunrise_register_account_url">http://mail.sunrise.ch/mip/dyn/registration/regLogin</string>
 	<string name="connector_sunrise_mail_pw_lost">Email password request</string>
 	<string name="connector_sunrise_mail_pw_lost_hint">Lost your email password? Request it here…</string>
-	<string name="connector_sunrise_mail_pw_lost_url">http://mail.sunrise.ch/mip/dyn/pw_recovery/pw_recovery</string>
+	<string name="connector_sunrise_mail_pw_lost_url">https://mip.sunrise.ch/mip/dyn/pw_recovery/pw_recovery</string>
 		<string name="connector_sunrise_gratis">Free</string>
 	<string name="connector_sunrise_bezahlt">Paid</string>
 	<string name="connector_sunrise_wrong_mobilenumber">Please go to preferences and enter a valid mobile number or no mobile number.</string>
