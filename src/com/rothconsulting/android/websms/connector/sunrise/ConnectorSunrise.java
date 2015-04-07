@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2010 Koni
- * 
+ *
  * This file is only usefull as part of WebSMS.
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 3 of the License, or (at your option) any later
  * version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with
  * this program; If not, see <http://www.gnu.org/licenses/>.
  */
@@ -32,7 +32,9 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.google.analytics.tracking.android.Fields;
 import com.google.analytics.tracking.android.GoogleAnalytics;
+import com.google.analytics.tracking.android.MapBuilder;
 import com.google.analytics.tracking.android.Tracker;
 
 import de.ub0r.android.websms.connector.common.Connector;
@@ -45,7 +47,7 @@ import de.ub0r.android.websms.connector.common.WebSMSException;
 
 /**
  * AsyncTask to manage IO to Sunrise API.
- * 
+ *
  * @author koni
  */
 public class ConnectorSunrise extends Connector {
@@ -191,11 +193,11 @@ public class ConnectorSunrise extends Connector {
 			this.log("**** Login mit Telefonnummer");
 			postParameter.add(new BasicNameValuePair("LoginForm_Login", username));
 			postParameter.add(new BasicNameValuePair("LoginForm_Password", password));
-			postParameter.add(new BasicNameValuePair("LoginRedirectSecret", "89cff646d5a3f65ce8a8ea59a3d7cad3"));
+			postParameter.add(new BasicNameValuePair("LoginRedirectSecret", "d285715d94fb4cd4613ad70aaeb8f735"));
 			postParameter
 					.add(new BasicNameValuePair(
 							"LoginRedirectURL",
-							"http://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewStandardCatalog-Browse?CatalogCategoryID=zv7AqFI.Z.gAAAEkbGdQzDCf"));
+							"https://www1.sunrise.ch/is-bin/INTERSHOP.enfinity/WFS/Sunrise-Residential-Site/de_CH/-/CHF/ViewStandardCatalog-Browse?CatalogCategoryID=zv7AqFI.Z.gAAAEkbGdQzDCf"));
 			postParameter
 					.add(new BasicNameValuePair(
 							"ajaxhref",
@@ -237,14 +239,16 @@ public class ConnectorSunrise extends Connector {
 		if (this.isLoginWithEmail(p)) {
 			// Google analytics
 			if (this.mGaTracker != null) {
-				this.log("Tracking ID=" + this.mGaTracker.getTrackingId());
-				this.mGaTracker.sendEvent(TAG, "doUpdate", "Login with Email", 0L);
+				this.log("Tracking ID=" + this.mGaTracker.getName());
+				this.mGaTracker.send(MapBuilder.createEvent(TAG, "doUpdate V3", "Login with Email", null)
+						.set(Fields.SESSION_CONTROL, "start").build());
 			}
 			this.sendData(URL_EMAIL_SENDSMS, context, null);
 		} else {
 			// Google analytics
 			if (this.mGaTracker != null) {
-				this.mGaTracker.sendEvent(TAG, "doUpdate", "Login with Phonenumber", 0L);
+				this.mGaTracker.send(MapBuilder.createEvent(TAG, "doUpdate V3", "Login with Phonenumber", null)
+						.set(Fields.SESSION_CONTROL, "start").build());
 			}
 			// if default sender for multiple numbers is present
 			if (this.isDefinedSenderEntered(p)) {
@@ -364,13 +368,15 @@ public class ConnectorSunrise extends Connector {
 		if (this.isLoginWithEmail(p)) {
 			// Google analytics
 			if (this.mGaTracker != null) {
-				this.mGaTracker.sendEvent(TAG, "Send SMS", "Login with Email", 0L);
+				this.mGaTracker.send(MapBuilder.createEvent(TAG, "Send SMS V3", "Login with Email", null)
+						.set(Fields.SESSION_CONTROL, "start").build());
 			}
 			this.sendData(URL_EMAIL_SENDSMS, context, postParameter);
 		} else {
 			// Google analytics
 			if (this.mGaTracker != null) {
-				this.mGaTracker.sendEvent(TAG, "Send SMS", "Login with Phonenumber", 0L);
+				this.mGaTracker.send(MapBuilder.createEvent(TAG, "Send SMS V3", "Login with Phonenumber", null)
+						.set(Fields.SESSION_CONTROL, "start").build());
 			}
 			this.sendData(URL_TEL_SENDSMS, context, postParameter);
 		}
@@ -382,7 +388,7 @@ public class ConnectorSunrise extends Connector {
 
 	/**
 	 * Sending the SMS
-	 * 
+	 *
 	 * @param fullTargetURL
 	 * @param context
 	 * @param postParameter
@@ -557,7 +563,7 @@ public class ConnectorSunrise extends Connector {
 
 	/**
 	 * central logger
-	 * 
+	 *
 	 * @param message
 	 */
 	private void log(final String message) {
